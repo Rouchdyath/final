@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Créer Formateur - EduSphère</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; background: #f5f7fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        .page-wrapper { display: grid; grid-template-columns: 300px 1fr; width: 100%; min-height: 100vh; }
+        .sidebar-wrapper { background: white; box-shadow: 2px 0 10px rgba(0,0,0,0.08); position: fixed; left: 0; top: 0; width: 300px; height: 100vh; overflow-y: auto; z-index: 100; }
+        .content-wrapper { grid-column: 2; padding: 30px 40px; overflow-y: auto; background: #f5f7fa; }
+        .content-header { background: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .content-header h1 { color: #2c3e50; font-size: 28px; margin: 0; font-weight: 700; }
+        .content-main { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); max-width: 800px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; color: #333; font-weight: 600; margin-bottom: 8px; }
+        .form-group input { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 4px; font-size: 14px; font-family: inherit; }
+        .form-group input:focus { outline: none; border-color: #3498db; background: #f0f7ff; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .btn-group { display: flex; gap: 10px; margin-top: 30px; }
+        .btn { padding: 12px 24px; background: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; transition: all 0.3s; }
+        .btn:hover { background: #229954; }
+        .btn-secondary { background: #95a5a6; margin-left: auto; }
+        .btn-secondary:hover { background: #7f8c8d; }
+        .alert { padding: 15px; border-radius: 4px; margin-bottom: 20px; }
+        .alert-success { background: #d4edda; color: #155724; }
+        .alert-danger { background: #f8d7da; color: #721c24; }
+        @media (max-width: 768px) { .page-wrapper { grid-template-columns: 1fr; } .sidebar-wrapper { width: 100%; height: auto; position: relative; } .content-wrapper { grid-column: 1; padding: 15px; } .form-row { grid-template-columns: 1fr; } .btn-group { flex-direction: column; } .btn-secondary { margin-left: 0; } }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <div id="sidebar-wrapper"></div>
+        <div class="content-wrapper">
+            <div class="content-header">
+                <h1>👨‍🏫 Créer un Formateur</h1>
+                <p>Ajoutez un nouveau formateur au système</p>
+            </div>
+            <div class="content-main">
+                <div id="alertBox"></div>
+                <form onsubmit="createFormateur(event)">
+                    <div class="form-group">
+                        <label for="email">Email *</label>
+                        <input type="email" id="email" placeholder="ex: formateur@university.com" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="identifier">Identifiant *</label>
+                            <input type="text" id="identifier" placeholder="ex: prof001" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Mot de passe *</label>
+                            <input type="password" id="password" placeholder="Sécurisé" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="nom">Nom Complet</label>
+                        <input type="text" id="nom" placeholder="ex: Martin Dupont">
+                    </div>
+                    <div class="btn-group">
+                        <button type="submit" class="btn">✅ Créer le Formateur</button>
+                        <button type="button" class="btn btn-secondary" onclick="window.history.back()">Annuler</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="auth.js"></script>
+    <script src="sidebar.js"></script>
+    <script>
+        window.addEventListener('load', function() {
+            if (!isLoggedIn() || getCurrentUser().role !== 'directeur') {
+                window.location.href = 'login.html';
+            }
+        });
+        function createFormateur(event) {
+            event.preventDefault();
+            const email = document.getElementById('email').value.trim();
+            const identifier = document.getElementById('identifier').value.trim();
+            const password = document.getElementById('password').value;
+            const nom = document.getElementById('nom').value.trim();
+            if (!email || !identifier || !password) {
+                showAlert('❌ Tous les champs obligatoires doivent être remplis', 'danger');
+                return;
+            }
+            const users = JSON.parse(localStorage.getItem('app_users') || '[]');
+            if (users.some(u => u.email === email || u.identifier === identifier)) {
+                showAlert('❌ Cet email ou identifiant existe déjà', 'danger');
+                return;
+            }
+            const newFormateur = {
+                id: Date.now().toString(),
+                email,
+                identifier,
+                password: btoa(password),
+                role: 'formateur',
+                nom,
+                verified: true,
+                dateCreation: new Date().toISOString()
+            };
+            users.push(newFormateur);
+            localStorage.setItem('app_users', JSON.stringify(users));
+            showAlert('✅ Formateur créé avec succès !', 'success');
+            setTimeout(() => window.history.back(), 1500);
+        }
+        function showAlert(msg, type) {
+            document.getElementById('alertBox').innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+            if (type !== 'danger') setTimeout(() => document.getElementById('alertBox').innerHTML = '', 3000);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultation des Étudiants - EduSphère</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; background: #f5f7fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        .page-wrapper { display: grid; grid-template-columns: 300px 1fr; width: 100%; min-height: 100vh; }
+        .sidebar-wrapper { background: white; box-shadow: 2px 0 10px rgba(0,0,0,0.08); position: fixed; left: 0; top: 0; width: 300px; height: 100vh; overflow-y: auto; z-index: 100; }
+        .content-wrapper { grid-column: 2; padding: 30px 40px; overflow-y: auto; background: #f5f7fa; }
+        .content-header { background: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .content-header h1 { color: #2c3e50; font-size: 28px; margin: 0; font-weight: 700; }
+        .content-main { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        
+        .filters { margin-bottom: 25px; padding: 20px; background: #f9f9f9; border-radius: 4px; }
+        .filters label { display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px; }
+        .filters select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        table th { background: #f0f0f0; color: #2c3e50; padding: 12px; text-align: left; font-weight: 600; border-bottom: 2px solid #ddd; }
+        table td { padding: 12px; border-bottom: 1px solid #eee; }
+        table tr:hover { background: #f9f9f9; }
+        
+        .empty-state { text-align: center; padding: 60px 30px; color: #999; }
+        .badge { display: inline-block; padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .badge-etudiant { background: #d4edda; color: #155724; }
+        .badge-formateur { background: #d1ecf1; color: #0c5460; }
+        .badge-directeur { background: #f8d7da; color: #721c24; }
+        
+        @media (max-width: 768px) { .page-wrapper { grid-template-columns: 1fr; } .sidebar-wrapper { width: 100%; height: auto; position: relative; } .content-wrapper { grid-column: 1; padding: 15px; } }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <div id="sidebar-wrapper"></div>
+        <div class="content-wrapper">
+            <div class="content-header">
+                <h1>👨‍🎓 Consultation des Utilisateurs</h1>
+                <p>Gérez et consultez tous les utilisateurs du système</p>
+            </div>
+            <div class="content-main">
+                <div class="filters">
+                    <label for="roleFilter">Filtrer par Rôle:</label>
+                    <select id="roleFilter" onchange="filterUtilisateurs()">
+                        <option value="etudiant">Étudiants</option>
+                        <option value="formateur">Formateurs</option>
+                        <option value="directeur">Directeurs</option>
+                        <option value="">Tous les Utilisateurs</option>
+                    </select>
+                </div>
+                <div id="utilisateursContainer"></div>
+            </div>
+        </div>
+    </div>
+    <script src="auth.js"></script>
+    <script src="sidebar.js"></script>
+    <script>
+        window.addEventListener('load', function() {
+            const user = getCurrentUser();
+            if (!isLoggedIn() || user.role !== 'directeur') {
+                window.location.href = 'login.html';
+            }
+            loadUtilisateurs();
+        });
+
+        function filterUtilisateurs() {
+            loadUtilisateurs();
+        }
+
+        function loadUtilisateurs() {
+            const roleFilter = document.getElementById('roleFilter').value;
+            const users = JSON.parse(localStorage.getItem('app_users') || '[]');
+            
+            let filtered = users;
+            if (roleFilter) {
+                filtered = users.filter(u => u.role === roleFilter);
+            }
+
+            // Trier par identifiant
+            filtered.sort((a, b) => a.identifier.localeCompare(b.identifier));
+
+            let html = '';
+            if (filtered.length === 0) {
+                html = '<div class="empty-state"><div style="font-size: 80px;">👨‍🎓</div><h2>Aucun utilisateur trouvé</h2></div>';
+            } else {
+                html = `<table>
+                    <thead>
+                        <tr>
+                            <th>Identifiant</th>
+                            <th>Nom</th>
+                            <th>Email</th>
+                            <th>Rôle</th>
+                            <th>Créé le</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+                
+                filtered.forEach(user => {
+                    const createdDate = new Date(user.dateCreation || new Date()).toLocaleDateString('fr-FR');
+                    const badgeClass = 'badge badge-' + user.role;
+                    
+                    html += `<tr>
+                        <td><strong>${user.identifier}</strong></td>
+                        <td>${user.nom || '-'}</td>
+                        <td>${user.email}</td>
+                        <td><span class="${badgeClass}">${user.role}</span></td>
+                        <td>${createdDate}</td>
+                    </tr>`;
+                });
+                
+                html += '</tbody></table>';
+            }
+            document.getElementById('utilisateursContainer').innerHTML = html;
+        }
+    </script>
+</body>
+</html>

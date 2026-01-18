@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes Espaces - EduSphère</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; background: #f5f7fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        .page-wrapper { display: grid; grid-template-columns: 300px 1fr; width: 100%; min-height: 100vh; }
+        .sidebar-wrapper { background: white; box-shadow: 2px 0 10px rgba(0,0,0,0.08); position: fixed; left: 0; top: 0; width: 300px; height: 100vh; overflow-y: auto; z-index: 100; }
+        .content-wrapper { grid-column: 2; padding: 30px 40px; overflow-y: auto; background: #f5f7fa; }
+        .content-header { background: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .content-header h1 { color: #2c3e50; font-size: 28px; margin: 0; font-weight: 700; }
+        .content-main { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .space-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .space-card { background: #f9f9f9; padding: 20px; border-radius: 8px; border-left: 4px solid #3498db; }
+        .space-card h3 { color: #2c3e50; margin: 0 0 10px 0; }
+        .space-info { color: #666; font-size: 14px; margin: 8px 0; }
+        .empty-state { text-align: center; padding: 60px 30px; color: #999; }
+        .btn { padding: 8px 16px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 14px; }
+        .btn:hover { background: #2980b9; }
+        @media (max-width: 768px) { .page-wrapper { grid-template-columns: 1fr; } .sidebar-wrapper { width: 100%; height: auto; position: relative; } .content-wrapper { grid-column: 1; padding: 15px; } .space-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <div id="sidebar-wrapper"></div>
+        <div class="content-wrapper">
+            <div class="content-header">
+                <h1>🏫 Mes Espaces</h1>
+                <p>Les espaces où vous enseignez</p>
+            </div>
+            <div class="content-main">
+                <div id="espacesContainer"></div>
+            </div>
+        </div>
+    </div>
+    <script src="auth.js"></script>
+    <script src="sidebar.js"></script>
+    <script>
+        window.addEventListener('load', function() {
+            const user = getCurrentUser();
+            if (!isLoggedIn() || user.role !== 'formateur') {
+                window.location.href = 'login.html';
+            }
+            loadMesEspaces();
+        });
+
+        function loadMesEspaces() {
+            const user = getCurrentUser();
+            const espaces = JSON.parse(localStorage.getItem('espaces') || '[]');
+            const travaux = JSON.parse(localStorage.getItem('travaux') || '[]');
+            
+            // Filtrer les espaces du formateur
+            const mesEspaces = espaces.filter(e => 
+                e.formateurs && (e.formateurs.includes(user.id) || e.formateurs.includes(user.identifier))
+            );
+
+            let html = '';
+            if (mesEspaces.length === 0) {
+                html = '<div class="empty-state"><div style="font-size: 80px;">🏫</div><h2>Aucun espace assigné</h2><p>Vous verrez vos espaces ici quand on vous les assignera</p></div>';
+            } else {
+                html = '<div class="space-grid">';
+                mesEspaces.forEach(e => {
+                    const mesTravaux = travaux.filter(t => t.espaceId === e.id).length;
+                    const mesEtudiants = (e.etudiants || []).length;
+                    html += `<div class="space-card">
+                        <h3>📚 ${e.matiere}</h3>
+                        <div class="space-info"><strong>Code:</strong> ${e.code}</div>
+                        <div class="space-info"><strong>Description:</strong> ${e.description || 'Aucune'}</div>
+                        <div class="space-info">👨‍🎓 Étudiants: <strong>${mesEtudiants}</strong></div>
+                        <div class="space-info">📖 Travaux: <strong>${mesTravaux}</strong></div>
+                        <button class="btn" onclick="alert('Voir détails - À implémenter')">Voir Détails</button>
+                    </div>`;
+                });
+                html += '</div>';
+            }
+            document.getElementById('espacesContainer').innerHTML = html;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes Livraisons - EduSphère</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; background: #f5f7fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        .page-wrapper { display: grid; grid-template-columns: 300px 1fr; width: 100%; min-height: 100vh; }
+        .sidebar-wrapper { background: white; box-shadow: 2px 0 10px rgba(0,0,0,0.08); position: fixed; left: 0; top: 0; width: 300px; height: 100vh; overflow-y: auto; z-index: 100; }
+        .content-wrapper { grid-column: 2; padding: 30px 40px; overflow-y: auto; background: #f5f7fa; }
+        .content-header { background: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .content-header h1 { color: #2c3e50; font-size: 28px; margin: 0; font-weight: 700; }
+        .content-main { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        
+        .livraison-card { 
+            background: #f9f9f9; 
+            padding: 25px; 
+            border-radius: 8px; 
+            margin-bottom: 25px; 
+            border-left: 4px solid #3498db;
+            transition: all 0.3s;
+        }
+        .livraison-card:hover { 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .livraison-card h3 { 
+            color: #2c3e50; 
+            margin: 0 0 15px 0; 
+            font-size: 18px;
+        }
+        
+        .card-header { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 20px; 
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .header-item { color: #666; font-size: 14px; }
+        .header-label { font-weight: 600; color: #2c3e50; }
+        
+        .status-badge { 
+            display: inline-block; 
+            padding: 6px 12px; 
+            border-radius: 20px; 
+            font-size: 12px; 
+            font-weight: 600;
+        }
+        .status-soumise { background: #d1ecf1; color: #0c5460; }
+        .status-evaluee { background: #d4edda; color: #155724; }
+        .status-enretard { background: #f8d7da; color: #721c24; }
+        
+        .card-content { 
+            margin-bottom: 15px;
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .card-content strong { 
+            color: #2c3e50;
+        }
+        
+        .card-footer { 
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        .footer-item { 
+            color: #666; 
+            font-size: 13px;
+        }
+        .footer-label { 
+            font-weight: 600; 
+            color: #2c3e50;
+            display: block;
+            margin-bottom: 4px;
+        }
+        
+        .note-display { 
+            font-size: 16px; 
+            font-weight: 700; 
+            color: #27ae60;
+        }
+        .note-pending {
+            color: #f39c12;
+            font-style: italic;
+        }
+        
+        .btn { 
+            padding: 8px 16px; 
+            background: #3498db; 
+            color: white; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+        .btn:hover { 
+            background: #2980b9;
+        }
+        .btn-danger { 
+            background: #e74c3c;
+        }
+        .btn-danger:hover { 
+            background: #c0392b;
+        }
+        
+        .empty-state { 
+            text-align: center; 
+            padding: 60px 30px; 
+            color: #999;
+        }
+        
+        .stats { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 20px; 
+            margin-bottom: 30px;
+        }
+        .stat-card { 
+            background: #f0f0f0; 
+            padding: 20px; 
+            border-radius: 8px; 
+            text-align: center;
+            border-left: 4px solid #3498db;
+        }
+        .stat-card h3 { 
+            color: #999; 
+            font-size: 12px; 
+            margin: 0 0 10px 0;
+        }
+        .stat-value { 
+            color: #2c3e50; 
+            font-size: 32px; 
+            font-weight: 700;
+        }
+        
+        @media (max-width: 768px) { 
+            .page-wrapper { grid-template-columns: 1fr; } 
+            .sidebar-wrapper { width: 100%; height: auto; position: relative; } 
+            .content-wrapper { grid-column: 1; padding: 15px; } 
+            .card-header { grid-template-columns: 1fr; }
+            .card-footer { grid-template-columns: 1fr; }
+            .stats { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <div id="sidebar-wrapper"></div>
+        <div class="content-wrapper">
+            <div class="content-header">
+                <h1>📦 Mes Livraisons</h1>
+                <p>Suivez l'état de vos livraisons et les évaluations</p>
+            </div>
+            <div class="content-main">
+                <div id="statsContainer"></div>
+                <div id="livraisonsContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="sidebar.js"></script>
+    <script>
+        window.addEventListener('load', function() {
+            const user = getCurrentUser();
+            if (!isLoggedIn() || user.role !== 'etudiant') {
+                window.location.href = 'login.html';
+            }
+            loadMesLivraisons();
+        });
+
+        function loadMesLivraisons() {
+            const user = getCurrentUser();
+            const livraisons = JSON.parse(localStorage.getItem('livraisons') || '[]');
+            const travaux = JSON.parse(localStorage.getItem('travaux') || '[]');
+            
+            // Filtrer les livraisons de l'étudiant
+            const mesLivraisons = livraisons.filter(l => l.etudiantId === user.id);
+            
+            // Statistiques
+            const soumises = mesLivraisons.filter(l => l.statut === 'soumise').length;
+            const evaluees = mesLivraisons.filter(l => l.note !== null && l.note !== undefined).length;
+            const enRetard = mesLivraisons.filter(l => {
+                const travail = travaux.find(t => t.id === l.travailId);
+                return travail && new Date() > new Date(travail.dateEchéance);
+            }).length;
+
+            let statsHtml = `
+                <div class="stats">
+                    <div class="stat-card">
+                        <h3>Soumises</h3>
+                        <div class="stat-value">${soumises}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Évaluées</h3>
+                        <div class="stat-value">${evaluees}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>En Retard</h3>
+                        <div class="stat-value">${enRetard}</div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('statsContainer').innerHTML = statsHtml;
+
+            // Livraisons
+            let html = '';
+            if (mesLivraisons.length === 0) {
+                html = '<div class="empty-state"><div style="font-size: 80px;">📦</div><h2>Aucune livraison</h2><p>Vous n\'avez pas encore soumis de livraisons</p></div>';
+            } else {
+                // Trier par date (plus récentes d'abord)
+                mesLivraisons.sort((a, b) => new Date(b.dateCreation) - new Date(a.dateCreation));
+                
+                mesLivraisons.forEach(l => {
+                    const travail = travaux.find(t => t.id === l.travailId);
+                    const dateRemise = new Date(l.dateRemise);
+                    const dateCreation = new Date(l.dateCreation);
+                    const enRetard = new Date() > new Date(travail?.dateEchéance || new Date());
+                    const statusClass = l.note !== null ? 'status-evaluee' : enRetard ? 'status-enretard' : 'status-soumise';
+                    const statusText = l.note !== null ? 'Évaluée' : enRetard ? 'En Retard' : 'Soumise';
+                    
+                    html += `
+                        <div class="livraison-card">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h3>${travail ? travail.titre : 'Travail Supprimé'}</h3>
+                                <span class="status-badge ${statusClass}">${statusText}</span>
+                            </div>
+                            
+                            <div class="card-header">
+                                <div class="header-item">
+                                    <span class="header-label">Étudiant:</span> ${user.identifier}
+                                </div>
+                                <div class="header-item">
+                                    <span class="header-label">Soumis le:</span> ${dateCreation.toLocaleDateString('fr-FR')} à ${dateCreation.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'})}
+                                </div>
+                            </div>
+                            
+                            <div class="card-content">
+                                <strong>Description de la livraison:</strong><br>
+                                ${l.description || 'Aucune description'}
+                            </div>
+                            
+                            ${l.commentaires ? `<div class="card-content">
+                                <strong>Commentaires:</strong><br>
+                                ${l.commentaires}
+                            </div>` : ''}
+                            
+                            ${l.fichier ? `<div class="card-content">
+                                <strong>Fichier:</strong> ${l.fichier}
+                            </div>` : ''}
+                            
+                            ${l.urlLivraison ? `<div class="card-content">
+                                <strong>Lien:</strong> <a href="${l.urlLivraison}" target="_blank" style="color: #3498db;">${l.urlLivraison}</a>
+                            </div>` : ''}
+                            
+                            <div class="card-footer">
+                                <div class="footer-item">
+                                    <span class="footer-label">Date de Remise:</span>
+                                    ${dateRemise.toLocaleDateString('fr-FR')} ${dateRemise.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'})}
+                                </div>
+                                <div class="footer-item">
+                                    <span class="footer-label">Note:</span>
+                                    ${l.note !== null ? `<span class="note-display">${l.note}/20</span>` : '<span class="note-pending">En attente d\'évaluation</span>'}
+                                </div>
+                            </div>
+                            
+                            ${l.note !== null ? `<div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;">
+                                <strong>Remarques du Formateur:</strong><br>
+                                <div style="color: #666; font-size: 14px; margin-top: 8px;">
+                                    ${l.remarques || 'Aucune remarque'}
+                                </div>
+                                <div style="color: #999; font-size: 12px; margin-top: 8px;">
+                                    Évalué le: ${new Date(l.dateEvaluation).toLocaleDateString('fr-FR')}
+                                </div>
+                            </div>` : ''}
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById('livraisonsContainer').innerHTML = html;
+        }
+    </script>
+</body>
+</html>

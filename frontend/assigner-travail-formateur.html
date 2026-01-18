@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assigner Travaux - EduSphère</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; background: #f5f7fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        .page-wrapper { display: grid; grid-template-columns: 300px 1fr; width: 100%; min-height: 100vh; }
+        .sidebar-wrapper { background: white; box-shadow: 2px 0 10px rgba(0,0,0,0.08); position: fixed; left: 0; top: 0; width: 300px; height: 100vh; overflow-y: auto; z-index: 100; }
+        .content-wrapper { grid-column: 2; padding: 30px 40px; overflow-y: auto; background: #f5f7fa; }
+        .content-header { background: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .content-header h1 { color: #2c3e50; font-size: 28px; margin: 0; font-weight: 700; }
+        .content-main { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .section { margin-bottom: 40px; }
+        .section h2 { color: #2c3e50; font-size: 20px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; }
+        select, input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+        select:focus, input:focus { outline: none; border-color: #3498db; box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1); }
+        .btn { padding: 12px 24px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; }
+        .btn:hover { background: #2980b9; }
+        .btn-success { background: #27ae60; }
+        .btn-success:hover { background: #229954; }
+        .btn-danger { background: #e74c3c; }
+        .btn-danger:hover { background: #c0392b; }
+        .assignments-list { margin-top: 20px; }
+        .assignment-item { background: #f9f9f9; padding: 15px; border-radius: 4px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .assignment-info { flex: 1; }
+        .assignment-info p { color: #666; font-size: 14px; margin: 5px 0; }
+        .empty-state { text-align: center; padding: 60px 30px; color: #999; }
+        .alert { padding: 15px; border-radius: 4px; margin-bottom: 20px; }
+        .alert-success { background: #d4edda; color: #155724; }
+        .alert-danger { background: #f8d7da; color: #721c24; }
+        @media (max-width: 768px) { .page-wrapper { grid-template-columns: 1fr; } .sidebar-wrapper { width: 100%; height: auto; position: relative; } .content-wrapper { grid-column: 1; padding: 15px; } }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <div id="sidebar-wrapper"></div>
+        <div class="content-wrapper">
+            <div class="content-header">
+                <h1>🎯 Assigner Travaux</h1>
+                <p>Assignez vos travaux aux étudiants de vos espaces</p>
+            </div>
+            <div class="content-main">
+                <div id="alertContainer"></div>
+                
+                <div class="section">
+                    <h2>📋 Assigner un Travail</h2>
+                    <form id="assignForm" onsubmit="assignWork(event)">
+                        <div class="form-group">
+                            <label for="travailId">Sélectionner le Travail *</label>
+                            <select id="travailId" required onchange="loadStudentsByTravail()">
+                                <option value="">-- Choisir un travail --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="studentId">Sélectionner l'Étudiant *</label>
+                            <select id="studentId" required>
+                                <option value="">-- Choisir un étudiant --</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-success">✅ Assigner</button>
+                    </form>
+                </div>
+
+                <div class="section">
+                    <h2>📊 Assignations Actuelles</h2>
+                    <div id="assignmentsContainer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="sidebar.js"></script>
+    <script>
+        window.addEventListener('load', function() {
+            const user = getCurrentUser();
+            if (!isLoggedIn() || user.role !== 'formateur') {
+                window.location.href = 'login.html';
+            }
+            loadMesTravaux();
+            loadAssignments();
+        });
+
+        function loadMesTravaux() {
+            const user = getCurrentUser();
+            const travaux = JSON.parse(localStorage.getItem('travaux') || '[]');
+            
+            // Filtrer les travaux créés par le formateur
+            const mesTravaux = travaux.filter(t => t.createdBy === user.id);
+            
+            let html = '<option value="">-- Choisir un travail --</option>';
+            mesTravaux.forEach(t => {
+                html += `<option value="${t.id}">${t.titre}</option>`;
+            });
+            document.getElementById('travailId').innerHTML = html;
+        }
+
+        function loadStudentsByTravail() {
+            const travailId = document.getElementById('travailId').value;
+            const user = getCurrentUser();
+            
+            if (!travailId) {
+                document.getElementById('studentId').innerHTML = '<option value="">-- Choisir un étudiant --</option>';
+                return;
+            }
+
+            const travaux = JSON.parse(localStorage.getItem('travaux') || '[]');
+            const espaces = JSON.parse(localStorage.getItem('espaces') || '[]');
+            const users = JSON.parse(localStorage.getItem('app_users') || '[]');
+            
+            const travail = travaux.find(t => t.id === travailId);
+            if (!travail) return;
+            
+            const espace = espaces.find(e => e.id === travail.espaceId);
+            if (!espace) return;
+            
+            // Récupérer les étudiants de l'espace
+            const espaceStuidents = (espace.etudiants || []).map(id => 
+                users.find(u => u.id === id || u.identifier === id)
+            ).filter(u => u);
+            
+            let html = '<option value="">-- Choisir un étudiant --</option>';
+            espaceStuidents.forEach(student => {
+                html += `<option value="${student.id}">${student.identifier} - ${student.nom || student.email}</option>`;
+            });
+            document.getElementById('studentId').innerHTML = html;
+        }
+
+        function assignWork(event) {
+            event.preventDefault();
+            const travailId = document.getElementById('travailId').value;
+            const studentId = document.getElementById('studentId').value;
+            
+            if (!travailId || !studentId) {
+                showAlert('❌ Veuillez sélectionner un travail et un étudiant', 'danger');
+                return;
+            }
+
+            const travaux = JSON.parse(localStorage.getItem('travaux') || '[]');
+            const travail = travaux.find(t => t.id === travailId);
+            
+            if (!travail.assignations) {
+                travail.assignations = [];
+            }
+            
+            if (travail.assignations.includes(studentId)) {
+                showAlert('❌ Ce travail est déjà assigné à cet étudiant', 'danger');
+                return;
+            }
+            
+            travail.assignations.push(studentId);
+            localStorage.setItem('travaux', JSON.stringify(travaux));
+            
+            showAlert('✅ Travail assigné avec succès', 'success');
+            document.getElementById('assignForm').reset();
+            document.getElementById('studentId').innerHTML = '<option value="">-- Choisir un étudiant --</option>';
+            loadAssignments();
+        }
+
+        function loadAssignments() {
+            const user = getCurrentUser();
+            const travaux = JSON.parse(localStorage.getItem('travaux') || '[]');
+            const users = JSON.parse(localStorage.getItem('app_users') || '[]');
+            
+            // Filtrer les travaux du formateur
+            const mesTravaux = travaux.filter(t => t.createdBy === user.id);
+            
+            let html = '';
+            mesTravaux.forEach(t => {
+                if (t.assignations && t.assignations.length > 0) {
+                    html += `<div style="margin-bottom: 25px;">
+                        <h3 style="color: #2c3e50; font-size: 16px; margin-bottom: 10px;">📝 ${t.titre}</h3>`;
+                    t.assignations.forEach(studentId => {
+                        const student = users.find(u => u.id === studentId || u.identifier === studentId);
+                        html += `<div class="assignment-item">
+                            <div class="assignment-info">
+                                <p><strong>${student ? student.identifier : 'Étudiant'}</strong></p>
+                                <p style="color: #999;">${student ? student.email : 'N/A'}</p>
+                            </div>
+                            <button class="btn btn-danger" onclick="removeAssignment('${t.id}', '${studentId}')">Retirer</button>
+                        </div>`;
+                    });
+                    html += '</div>';
+                }
+            });
+            
+            if (!html) {
+                html = '<div class="empty-state"><p>Aucune assignation - Assignez vos travaux aux étudiants</p></div>';
+            }
+            
+            document.getElementById('assignmentsContainer').innerHTML = html;
+        }
+
+        function removeAssignment(travailId, studentId) {
+            if (!confirm('Êtes-vous sûr de vouloir retirer cette assignation?')) return;
+            
+            const travaux = JSON.parse(localStorage.getItem('travaux') || '[]');
+            const travail = travaux.find(t => t.id === travailId);
+            
+            if (travail) {
+                travail.assignations = travail.assignations.filter(id => id !== studentId);
+                localStorage.setItem('travaux', JSON.stringify(travaux));
+                showAlert('✅ Assignation retirée', 'success');
+                loadAssignments();
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertHTML = `<div class="alert alert-${type}">${message}</div>`;
+            document.getElementById('alertContainer').innerHTML = alertHTML;
+            setTimeout(() => document.getElementById('alertContainer').innerHTML = '', 4000);
+        }
+    </script>
+</body>
+</html>

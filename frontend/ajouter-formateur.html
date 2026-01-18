@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assigner Formateurs aux Espaces - EduSphère</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; background: #f5f7fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        .page-wrapper { display: grid; grid-template-columns: 300px 1fr; width: 100%; min-height: 100vh; }
+        .sidebar-wrapper { background: white; box-shadow: 2px 0 10px rgba(0,0,0,0.08); position: fixed; left: 0; top: 0; width: 300px; height: 100vh; overflow-y: auto; z-index: 100; }
+        .content-wrapper { grid-column: 2; padding: 30px 40px; overflow-y: auto; background: #f5f7fa; }
+        .content-header { background: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .content-header h1 { color: #2c3e50; font-size: 28px; margin: 0; font-weight: 700; }
+        .content-main { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; color: #333; font-weight: 600; margin-bottom: 8px; }
+        .form-group select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 4px; font-size: 14px; }
+        .form-group select:focus { outline: none; border-color: #3498db; background: #f0f7ff; }
+        .btn { padding: 10px 20px; background: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; margin-right: 10px; }
+        .btn:hover { background: #229954; }
+        .btn-danger { background: #e74c3c; }
+        .btn-danger:hover { background: #c0392b; }
+        .alert { padding: 15px; border-radius: 4px; margin-bottom: 20px; }
+        .alert-success { background: #d4edda; color: #155724; }
+        .alert-danger { background: #f8d7da; color: #721c24; }
+        .assignment-list { margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px; }
+        .assignment-item { background: #f9f9f9; padding: 15px; margin: 10px 0; border-radius: 4px; border-left: 4px solid #3498db; display: flex; justify-content: space-between; align-items: center; }
+        @media (max-width: 768px) { .page-wrapper { grid-template-columns: 1fr; } .sidebar-wrapper { width: 100%; height: auto; position: relative; } .content-wrapper { grid-column: 1; padding: 15px; } .form-row { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <div id="sidebar-wrapper"></div>
+        <div class="content-wrapper">
+            <div class="content-header">
+                <h1>👨‍🏫 Assigner Formateurs aux Espaces</h1>
+                <p>Associez les formateurs aux espaces pédagogiques</p>
+            </div>
+            <div class="content-main">
+                <div id="alertBox"></div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="espaceSelect">Sélectionner un Espace *</label>
+                        <select id="espaceSelect" onchange="loadFormateurs()">
+                            <option value="">--Sélectionner--</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="formateurSelect">Sélectionner un Formateur *</label>
+                        <select id="formateurSelect">
+                            <option value="">--Sélectionner--</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn" onclick="assignFormateur()">✅ Assigner le Formateur</button>
+                <div class="assignment-list" id="assignmentList"></div>
+            </div>
+        </div>
+    </div>
+    <script src="auth.js"></script>
+    <script src="sidebar.js"></script>
+    <script>
+        window.addEventListener('load', function() {
+            if (!isLoggedIn() || getCurrentUser().role !== 'directeur') {
+                window.location.href = 'login.html';
+            }
+            loadEspaces();
+            loadAllFormateurs();
+        });
+        function loadEspaces() {
+            const espaces = JSON.parse(localStorage.getItem('espaces') || '[]');
+            const select = document.getElementById('espaceSelect');
+            select.innerHTML = '<option value="">--Sélectionner--</option>' +
+                espaces.map(e => `<option value="${e.id}">${e.matiere} (${e.code})</option>`).join('');
+        }
+        function loadAllFormateurs() {
+            const users = JSON.parse(localStorage.getItem('app_users') || '[]');
+            const select = document.getElementById('formateurSelect');
+            const formateurs = users.filter(u => u.role === 'formateur');
+            select.innerHTML = '<option value="">--Sélectionner--</option>' +
+                formateurs.map(f => `<option value="${f.id}">${f.identifier}</option>`).join('');
+        }
+        function loadFormateurs() {
+            const espaceId = document.getElementById('espaceSelect').value;
+            if (!espaceId) {
+                document.getElementById('assignmentList').innerHTML = '';
+                return;
+            }
+            const espaces = JSON.parse(localStorage.getItem('espaces') || '[]');
+            const espace = espaces.find(e => e.id === espaceId);
+            const users = JSON.parse(localStorage.getItem('app_users') || '[]');
+            let html = '<h2 style="color: #2c3e50; margin-bottom: 20px;">👨‍🏫 Formateurs assignés à ' + espace.matiere + '</h2>';
+            if (!espace.formateurs || espace.formateurs.length === 0) {
+                html += '<div style="text-align: center; padding: 40px; color: #999;">Aucun formateur assigné</div>';
+            } else {
+                espace.formateurs.forEach(formId => {
+                    const form = users.find(u => u.id === formId || u.identifier === formId);
+                    html += `<div class="assignment-item">
+                        <div>👨‍🏫 ${form ? form.identifier : 'Formateur'}</div>
+                        <button class="btn btn-danger" onclick="removeFormateur('${espaceId}', '${formId}')">✕ Retirer</button>
+                    </div>`;
+                });
+            }
+            document.getElementById('assignmentList').innerHTML = html;
+        }
+        function assignFormateur() {
+            const espaceId = document.getElementById('espaceSelect').value;
+            const formateurId = document.getElementById('formateurSelect').value;
+            if (!espaceId || !formateurId) {
+                showAlert('❌ Veuillez sélectionner un espace et un formateur', 'danger');
+                return;
+            }
+            const espaces = JSON.parse(localStorage.getItem('espaces') || '[]');
+            const espace = espaces.find(e => e.id === espaceId);
+            if (espace.formateurs.includes(formateurId)) {
+                showAlert('❌ Ce formateur est déjà assigné à cet espace', 'danger');
+                return;
+            }
+            espace.formateurs.push(formateurId);
+            localStorage.setItem('espaces', JSON.stringify(espaces));
+            showAlert('✅ Formateur assigné avec succès', 'success');
+            loadFormateurs();
+        }
+        function removeFormateur(espaceId, formateurId) {
+            const espaces = JSON.parse(localStorage.getItem('espaces') || '[]');
+            const espace = espaces.find(e => e.id === espaceId);
+            espace.formateurs = espace.formateurs.filter(id => id !== formateurId);
+            localStorage.setItem('espaces', JSON.stringify(espaces));
+            showAlert('✅ Formateur retiré avec succès', 'success');
+            loadFormateurs();
+        }
+        function showAlert(msg, type) {
+            document.getElementById('alertBox').innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+            setTimeout(() => document.getElementById('alertBox').innerHTML = '', 3000);
+        }
+    </script>
+</body>
+</html>

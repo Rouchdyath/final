@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultation Travaux - EduSphère</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; background: #f5f7fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        .page-wrapper { display: grid; grid-template-columns: 300px 1fr; width: 100%; min-height: 100vh; }
+        .sidebar-wrapper { background: white; box-shadow: 2px 0 10px rgba(0,0,0,0.08); position: fixed; left: 0; top: 0; width: 300px; height: 100vh; overflow-y: auto; z-index: 100; }
+        .content-wrapper { grid-column: 2; padding: 30px 40px; overflow-y: auto; background: #f5f7fa; }
+        .content-header { background: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .content-header h1 { color: #2c3e50; font-size: 28px; margin: 0; font-weight: 700; }
+        .content-main { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        
+        .travail-card { background: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #3498db; }
+        .travail-card h3 { color: #2c3e50; margin-bottom: 12px; }
+        .travail-info { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .info-item { color: #666; font-size: 13px; }
+        .info-label { font-weight: 600; color: #2c3e50; }
+        
+        .etudiants-list { background: white; padding: 12px; border-radius: 4px; margin-top: 10px; }
+        .etudiant-badge { display: inline-block; padding: 5px 10px; background: #d1ecf1; color: #0c5460; border-radius: 20px; margin: 3px; font-size: 12px; }
+        
+        .empty-state { text-align: center; padding: 60px 30px; color: #999; }
+        .btn { padding: 8px 16px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 12px; }
+        .btn:hover { background: #2980b9; }
+        .btn-danger { background: #e74c3c; }
+        .btn-danger:hover { background: #c0392b; }
+        
+        @media (max-width: 768px) { .page-wrapper { grid-template-columns: 1fr; } .sidebar-wrapper { width: 100%; height: auto; position: relative; } .content-wrapper { grid-column: 1; padding: 15px; } .travail-info { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <div id="sidebar-wrapper"></div>
+        <div class="content-wrapper">
+            <div class="content-header">
+                <h1>📖 Tous les Travaux</h1>
+                <p>Consultez les travaux créés par les formateurs et les étudiants assignés</p>
+            </div>
+            <div class="content-main">
+                <div id="travauxContainer"></div>
+            </div>
+        </div>
+    </div>
+    <script src="auth.js"></script>
+    <script src="sidebar.js"></script>
+    <script>
+        window.addEventListener('load', function() {
+            const user = getCurrentUser();
+            if (!isLoggedIn() || user.role !== 'directeur') {
+                window.location.href = 'login.html';
+            }
+            loadTousTravaux();
+        });
+
+        function loadTousTravaux() {
+            const travaux = JSON.parse(localStorage.getItem('travaux') || '[]');
+            const espaces = JSON.parse(localStorage.getItem('espaces') || '[]');
+            const users = JSON.parse(localStorage.getItem('app_users') || '[]');
+
+            let html = '';
+            if (travaux.length === 0) {
+                html = '<div class="empty-state"><div style="font-size: 80px;">📚</div><h2>Aucun travail</h2><p>Aucun travail n\'a encore été créé</p></div>';
+            } else {
+                travaux.forEach(t => {
+                    const espace = espaces.find(e => e.id === t.espaceId);
+                    const formateur = users.find(u => u.id === t.createdBy || u.identifier === t.createdBy);
+                    const dateEchéance = new Date(t.dateEchéance);
+                    const etudiants = (t.assignations || []).map(id => 
+                        users.find(u => u.id === id || u.identifier === id)
+                    ).filter(u => u);
+
+                    html += `
+                        <div class="travail-card">
+                            <h3>📝 ${t.titre}</h3>
+                            <div class="travail-info">
+                                <div class="info-item">
+                                    <span class="info-label">Espace:</span> ${espace ? espace.matiere : 'N/A'} (${espace ? espace.code : 'N/A'})
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Formateur:</span> ${formateur ? formateur.identifier : 'N/A'}
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Date d'Échéance:</span> ${dateEchéance.toLocaleDateString('fr-FR')}
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Description:</span> ${t.description || 'Aucune'}
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;">
+                                <strong>👨‍🎓 Étudiants Assignés (${etudiants.length}):</strong>
+                                <div class="etudiants-list">
+                                    ${etudiants.length === 0 ? '<span style="color: #999;">Aucun étudiant assigné</span>' : 
+                                    etudiants.map(e => `<span class="etudiant-badge">${e.identifier} - ${e.nom || e.email}</span>`).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById('travauxContainer').innerHTML = html;
+        }
+    </script>
+</body>
+</html>

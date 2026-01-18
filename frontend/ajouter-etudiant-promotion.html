@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assigner Étudiants aux Promotions - EduSphère</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; background: #f5f7fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        .page-wrapper { display: grid; grid-template-columns: 300px 1fr; width: 100%; min-height: 100vh; }
+        .sidebar-wrapper { background: white; box-shadow: 2px 0 10px rgba(0,0,0,0.08); position: fixed; left: 0; top: 0; width: 300px; height: 100vh; overflow-y: auto; z-index: 100; }
+        .content-wrapper { grid-column: 2; padding: 30px 40px; overflow-y: auto; background: #f5f7fa; }
+        .content-header { background: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .content-header h1 { color: #2c3e50; font-size: 28px; margin: 0; font-weight: 700; }
+        .content-main { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; color: #333; font-weight: 600; margin-bottom: 8px; }
+        .form-group select, .form-group input { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 4px; font-size: 14px; }
+        .form-group select:focus, .form-group input:focus { outline: none; border-color: #3498db; background: #f0f7ff; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .btn { padding: 10px 20px; background: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; transition: all 0.3s; margin-right: 10px; }
+        .btn:hover { background: #229954; }
+        .btn-danger { background: #e74c3c; }
+        .btn-danger:hover { background: #c0392b; }
+        .alert { padding: 15px; border-radius: 4px; margin-bottom: 20px; }
+        .alert-success { background: #d4edda; color: #155724; }
+        .alert-danger { background: #f8d7da; color: #721c24; }
+        .assignment-list { margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px; }
+        .assignment-item { background: #f9f9f9; padding: 15px; margin: 10px 0; border-radius: 4px; border-left: 4px solid #3498db; display: flex; justify-content: space-between; align-items: center; }
+        .assignment-info { flex: 1; }
+        .empty-state { text-align: center; padding: 60px 30px; color: #999; }
+        @media (max-width: 768px) { .page-wrapper { grid-template-columns: 1fr; } .sidebar-wrapper { width: 100%; height: auto; position: relative; } .content-wrapper { grid-column: 1; padding: 15px; } .form-row { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <div id="sidebar-wrapper"></div>
+        <div class="content-wrapper">
+            <div class="content-header">
+                <h1>👥 Assigner Étudiants aux Promotions</h1>
+                <p>Associez les étudiants aux promotions</p>
+            </div>
+            <div class="content-main">
+                <div id="alertBox"></div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="promotionSelect">Sélectionner une Promotion *</label>
+                        <select id="promotionSelect" onchange="loadStudents()">
+                            <option value="">--Sélectionner--</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="etudiantSelect">Sélectionner un Étudiant *</label>
+                        <select id="etudiantSelect">
+                            <option value="">--Sélectionner--</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn" onclick="assignStudent()">✅ Assigner l'Étudiant</button>
+                <div class="assignment-list" id="assignmentList"></div>
+            </div>
+        </div>
+    </div>
+    <script src="auth.js"></script>
+    <script src="sidebar.js"></script>
+    <script>
+        window.addEventListener('load', function() {
+            if (!isLoggedIn() || getCurrentUser().role !== 'directeur') {
+                window.location.href = 'login.html';
+            }
+            loadPromotions();
+            loadAllStudents();
+        });
+
+        function loadPromotions() {
+            const promotions = JSON.parse(localStorage.getItem('promotions') || '[]');
+            const select = document.getElementById('promotionSelect');
+            select.innerHTML = '<option value="">--Sélectionner--</option>' +
+                promotions.map(p => `<option value="${p.id}">${p.nom} (${p.code})</option>`).join('');
+        }
+
+        function loadAllStudents() {
+            const users = JSON.parse(localStorage.getItem('app_users') || '[]');
+            const select = document.getElementById('etudiantSelect');
+            const students = users.filter(u => u.role === 'etudiant');
+            select.innerHTML = '<option value="">--Sélectionner--</option>' +
+                students.map(s => `<option value="${s.id}">${s.identifier}</option>`).join('');
+        }
+
+        function loadStudents() {
+            const promotionId = document.getElementById('promotionSelect').value;
+            if (!promotionId) {
+                document.getElementById('assignmentList').innerHTML = '';
+                return;
+            }
+            const promotions = JSON.parse(localStorage.getItem('promotions') || '[]');
+            const promotion = promotions.find(p => p.id === promotionId);
+            const users = JSON.parse(localStorage.getItem('app_users') || '[]');
+
+            let html = '<h2 style="color: #2c3e50; margin-bottom: 20px;">📋 Étudiants assignés à ' + promotion.nom + '</h2>';
+            if (!promotion.etudiants || promotion.etudiants.length === 0) {
+                html += '<div class="empty-state">Aucun étudiant assigné à cette promotion</div>';
+            } else {
+                promotion.etudiants.forEach(etudId => {
+                    const etud = users.find(u => u.id === etudId || u.identifier === etudId);
+                    html += `<div class="assignment-item">
+                        <div class="assignment-info">👨‍🎓 ${etud ? etud.identifier : 'Étudiant'}</div>
+                        <button class="btn btn-danger" onclick="removeStudent('${promotionId}', '${etudId}')">✕ Retirer</button>
+                    </div>`;
+                });
+            }
+            document.getElementById('assignmentList').innerHTML = html;
+        }
+
+        function assignStudent() {
+            const promotionId = document.getElementById('promotionSelect').value;
+            const studentId = document.getElementById('etudiantSelect').value;
+
+            if (!promotionId || !studentId) {
+                showAlert('❌ Veuillez sélectionner une promotion et un étudiant', 'danger');
+                return;
+            }
+
+            const promotions = JSON.parse(localStorage.getItem('promotions') || '[]');
+            const promotion = promotions.find(p => p.id === promotionId);
+
+            if (promotion.etudiants.includes(studentId)) {
+                showAlert('❌ Cet étudiant est déjà assigné à cette promotion', 'danger');
+                return;
+            }
+
+            promotion.etudiants.push(studentId);
+            localStorage.setItem('promotions', JSON.stringify(promotions));
+            showAlert('✅ Étudiant assigné avec succès', 'success');
+            loadStudents();
+        }
+
+        function removeStudent(promotionId, studentId) {
+            const promotions = JSON.parse(localStorage.getItem('promotions') || '[]');
+            const promotion = promotions.find(p => p.id === promotionId);
+            promotion.etudiants = promotion.etudiants.filter(id => id !== studentId);
+            localStorage.setItem('promotions', JSON.stringify(promotions));
+            showAlert('✅ Étudiant retiré avec succès', 'success');
+            loadStudents();
+        }
+
+        function showAlert(msg, type) {
+            document.getElementById('alertBox').innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+            setTimeout(() => document.getElementById('alertBox').innerHTML = '', 3000);
+        }
+    </script>
+<script>
+// Initialiser les données de démo si pas déjà fait
+if (!localStorage.getItem('demo_initialized_v2')) {
+    // Promotions
+    const promotions = [
+        {
+            id: '1001',
+            nom: 'Licence 3 Informatique 2024-2025',
+            code: 'L3INFO2024',
+            niveau: 'L3',
+            dateDebut: '2024-09-01',
+            dateFin: '2025-05-31',
+            description: 'Licence Informatique 3e année',
+            etudiants: [],
+            formateurs: [],
+            dateCreation: '2024-01-15'
+        },
+        {
+            id: '1002',
+            nom: 'Master 1 IA 2024-2025',
+            code: 'M1IA2024',
+            niveau: 'M1',
+            dateDebut: '2024-09-01',
+            dateFin: '2025-08-31',
+            description: 'Master Intelligence Artificielle',
+            etudiants: [],
+            formateurs: [],
+            dateCreation: '2024-01-20'
+        }
+    ];
+    localStorage.setItem('promotions', JSON.stringify(promotions));
+    localStorage.setItem('demo_initialized_v2', 'true');
+    console.log('Demo data initialized with promotions');
+}
+</script></body>
+</html>

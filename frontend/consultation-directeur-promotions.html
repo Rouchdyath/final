@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultation des Promotions - Directeur</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="auth.js"></script>
+        <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            background: #f5f7fa;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        .page-wrapper {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            width: 100%;
+            height: 100%;
+            min-height: 100vh;
+        }
+
+        .sidebar-wrapper {
+            background: white;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.08);
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 300px;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .content-wrapper {
+            grid-column: 2;
+            margin-left: 0;
+            padding: 30px 40px;
+            width: 100%;
+            overflow-y: auto;
+            background: #f5f7fa;
+        }
+
+        .content-header {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .content-header h1 {
+            color: #2c3e50;
+            font-size: 28px;
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .content-header p {
+            color: #666;
+            margin: 10px 0 0 0;
+            font-size: 14px;
+        }
+
+        .content-main {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .content-main h2 {
+            color: #2c3e50;
+            font-size: 24px;
+            margin: 0 0 20px 0;
+            font-weight: 600;
+        }
+
+        .content-main h3 {
+            color: #34495e;
+            font-size: 18px;
+            margin: 30px 0 15px 0;
+            font-weight: 600;
+        }
+
+        .content-main p {
+            color: #666;
+            line-height: 1.6;
+            margin: 0 0 15px 0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #333;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table th {
+            background: #f0f0f0;
+            color: #2c3e50;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #ddd;
+        }
+
+        table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        table tr:hover {
+            background: #f9f9f9;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .btn-success {
+            background: #27ae60;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+        }
+
+        @media (max-width: 768px) {
+            .page-wrapper {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar-wrapper {
+                width: 100%;
+                height: auto;
+                position: relative;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            }
+
+            .content-wrapper {
+                grid-column: 1;
+                margin-left: 0;
+                padding: 20px;
+            }
+
+            .content-header {
+                padding: 20px;
+            }
+
+            .content-main {
+                padding: 20px;
+            }
+        }
+
+        .sidebar-wrapper::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .sidebar-wrapper::-webkit-scrollbar-track {
+            background: #f0f0f0;
+        }
+
+        .sidebar-wrapper::-webkit-scrollbar-thumb {
+            background: #bbb;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <!-- Sidebar -->
+        <div class="sidebar-wrapper" id="sidebar-wrapper"></div>
+
+        <!-- Contenu -->
+        <div class="content-wrapper">
+            <header>
+                
+            <h1>👨‍💼 Consultation des Promotions</h1>
+            <p></p>
+        
+            </header>
+
+            <main>
+                
+            <h2>Toutes les Promotions</h2>
+            
+            <div class="search-box">
+                <input 
+                    type="text" 
+                    id="search-input" 
+                    placeholder="Rechercher par nom ou année..."
+                >
+            </div>
+
+            <div id="message-container"></div>
+            
+            <div id="loading" class="text-center mt-20">
+                <p>⏳ Chargement des promotions...</p>
+            </div>
+
+            <div id="filter-stats" class="filter-stats hidden"></div>
+
+            <div id="promotions-container" class="promotions-grid"></div>
+
+            <div id="empty-message" class="hidden text-center mt-20">
+                <p style="color: #7f8c8d; font-size: 1.1em;">
+                    Aucune promotion trouvée.
+                </p>
+            </div>
+        
+            </main>
+        </div>
+    </div>
+
+    <script src="sidebar.js"></script>
+
+    <script>
+        // Vérifier l'accès à cette page
+        window.addEventListener('load', function() {
+            const user = getCurrentUser();
+            
+            if (!isLoggedIn()) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Contrôle d'accès par page
+            const pageAccess = {
+                'creer-espace.html': ['directeur'],
+                'creer-etudiant.html': ['directeur'],
+                'creer-formateur.html': ['directeur'],
+                'creer-promotion.html': ['directeur'],
+                'creer-travail.html': ['directeur'],
+                'ajouter-etudiant-promotion.html': ['directeur'],
+                'ajouter-formateur.html': ['directeur'],
+                'ajouter_etudiant.html': ['directeur'],
+                'consultation-directeur-espaces.html': ['directeur'],
+                'consultation-directeur-etudiants.html': ['directeur'],
+                'consultation-directeur-promotions.html': ['directeur'],
+                'assigner-travail.html': ['directeur', 'formateur'],
+                'evaluer-livraisons.html': ['directeur', 'formateur'],
+                'consultation-formateur-travaux.html': ['directeur', 'formateur']
+            };
+
+            const currentPage = window.location.pathname.split('/').pop();
+            const allowedRoles = pageAccess[currentPage];
+
+            if (allowedRoles && !allowedRoles.includes(user.role)) {
+                document.querySelector('.content-main').innerHTML = `
+                    <div class="alert alert-danger" style="padding: 30px; text-align: center; margin-top: 50px;">
+                        <h2 style="color: #721c24; margin-bottom: 10px;">❌ Accès Refusé</h2>
+                        <p style="color: #721c24; margin-bottom: 20px;">Vous n'avez pas les permissions nécessaires pour accéder à cette page.</p>
+                        <p style="color: #999; font-size: 14px; margin-bottom: 20px;">Rôle requis: <strong>${allowedRoles.join(', ')}</strong></p>
+                        <p style="color: #999; font-size: 14px;">Votre rôle: <strong>${user.role}</strong></p>
+                        <a href="index.html" style="display: inline-block; margin-top: 20px; padding: 10px 20px; background: #3498db; color: white; text-decoration: none; border-radius: 4px;">Retour à l'accueil</a>
+                    </div>
+                `;
+                return;
+            }
+        });
+    </script>
+    <script>
+
+// Initialiser les données de démonstration si elles n'existent pas
+function initializeDemoData() {
+    // Vérifier si les données existent déjà
+    if (localStorage.getItem('demo_initialized') === 'true') {
+        return;
+    }
+
+    // Créer les espaces pédagogiques
+    const espacesData = [
+        {
+            id: 'espace-1',
+            matiere: 'Mathématiques Avancées',
+            code: 'MATH-101',
+            description: 'Cours de mathématiques niveau licence',
+            formateurs: ['formateur@institution.fr'],
+            etudiants: ['etudiant1@institution.fr', 'etudiant2@institution.fr', 'etudiant3@institution.fr'],
+            dateCreation: new Date().toISOString()
+        },
+        {
+            id: 'espace-2',
+            matiere: 'Programmation Python',
+            code: 'INFO-201',
+            description: 'Introduction à la programmation avec Python',
+            formateurs: ['formateur@institution.fr'],
+            etudiants: ['etudiant1@institution.fr', 'etudiant4@institution.fr', 'etudiant5@institution.fr'],
+            dateCreation: new Date().toISOString()
+        },
+        {
+            id: 'espace-3',
+            matiere: 'Physique Générale',
+            code: 'PHYS-101',
+            description: 'Mécanique et thermodynamique',
+            formateurs: ['formateur2@institution.fr'],
+            etudiants: ['etudiant2@institution.fr', 'etudiant3@institution.fr', 'etudiant6@institution.fr'],
+            dateCreation: new Date().toISOString()
+        }
+    ];
+
+    // Créer les travaux
+    const travauxData = [
+        {
+            id: 'travail-1',
+            titre: 'Équations Différentielles',
+            description: 'Résoudre 10 équations différentielles du premier ordre',
+            espaceId: 'espace-1',
+            formateur: 'formateur@institution.fr',
+            dateEchéance: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            dateCreation: new Date().toISOString(),
+            statut: 'actif',
+            fichier: 'exam_math.pdf'
+        },
+        {
+            id: 'travail-2',
+            titre: 'Projet Python: Gestion d\'Inventaire',
+            description: 'Créer une application de gestion d'inventaire en Python',
+            espaceId: 'espace-2',
+            formateur: 'formateur@institution.fr',
+            dateEchéance: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            dateCreation: new Date().toISOString(),
+            statut: 'actif',
+            fichier: 'project_description.pdf'
+        },
+        {
+            id: 'travail-3',
+            titre: 'TP Mécanique: Pendule Simple',
+            description: 'Étude expérimentale du pendule simple et analyse des résultats',
+            espaceId: 'espace-3',
+            formateur: 'formateur2@institution.fr',
+            dateEchéance: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            dateCreation: new Date().toISOString(),
+            statut: 'actif',
+            fichier: 'tp_protocol.pdf'
+        },
+        {
+            id: 'travail-4',
+            titre: 'Dérivées et Intégrales',
+            description: 'Exercices sur les dérivées et intégrales',
+            espaceId: 'espace-1',
+            formateur: 'formateur@institution.fr',
+            dateEchéance: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            dateCreation: new Date().toISOString(),
+            statut: 'actif',
+            fichier: 'exercises.pdf'
+        },
+        {
+            id: 'travail-5',
+            titre: 'Quiz Python',
+            description: 'Quiz sur les bases de la programmation Python',
+            espaceId: 'espace-2',
+            formateur: 'formateur@institution.fr',
+            dateEchéance: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            dateCreation: new Date().toISOString(),
+            statut: 'actif',
+            fichier: 'quiz.pdf'
+        }
+    ];
+
+    // Créer les livraisons
+    const livraisonsData = [
+        {
+            id: 'livraison-1',
+            travailId: 'travail-1',
+            etudiantId: 'etudiant1',
+            statut: 'soumise',
+            fichier: 'solution_1.pdf',
+            dateRemise: new Date().toISOString(),
+            remarques: 'Travail complet',
+            note: 18
+        },
+        {
+            id: 'livraison-2',
+            travailId: 'travail-1',
+            etudiantId: 'etudiant2',
+            statut: 'soumise',
+            fichier: 'solution_2.pdf',
+            dateRemise: new Date().toISOString(),
+            remarques: 'Bon travail, quelques erreurs',
+            note: 15
+        },
+        {
+            id: 'livraison-3',
+            travailId: 'travail-2',
+            etudiantId: 'etudiant1',
+            statut: 'en_cours',
+            fichier: 'project_progress.py',
+            dateRemise: null,
+            remarques: '',
+            note: null
+        },
+        {
+            id: 'livraison-4',
+            travailId: 'travail-3',
+            etudiantId: 'etudiant2',
+            statut: 'soumise',
+            fichier: 'report.pdf',
+            dateRemise: new Date().toISOString(),
+            remarques: 'Excellent rapport',
+            note: 19
+        }
+    ];
+
+    // Créer les promotions
+    const promotionsData = [
+        {
+            id: 'promotion-1',
+            nom: 'Licence 1 - 2024-2025',
+            code: 'L1-2024',
+            dateDebut: '2024-09-01',
+            dateFin: '2025-06-30',
+            etudiants: ['etudiant1', 'etudiant2', 'etudiant3', 'etudiant4', 'etudiant5'],
+            formateurs: ['formateur', 'formateur2']
+        },
+        {
+            id: 'promotion-2',
+            nom: 'Master 1 - 2024-2025',
+            code: 'M1-2024',
+            dateDebut: '2024-09-01',
+            dateFin: '2025-06-30',
+            etudiants: ['etudiant6', 'etudiant7'],
+            formateurs: ['formateur']
+        }
+    ];
+
+    // Sauvegarder dans localStorage
+    localStorage.setItem('espaces', JSON.stringify(espacesData));
+    localStorage.setItem('travaux', JSON.stringify(travauxData));
+    localStorage.setItem('livraisons', JSON.stringify(livraisonsData));
+    localStorage.setItem('promotions', JSON.stringify(promotionsData));
+    localStorage.setItem('demo_initialized', 'true');
+
+    console.log('✅ Données de démonstration initialisées');
+}
+
+// Initialiser au chargement
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeDemoData);
+} else {
+    initializeDemoData();
+}
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Évaluer Livraisons - EduSphère</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; background: #f5f7fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        .page-wrapper { display: grid; grid-template-columns: 300px 1fr; width: 100%; min-height: 100vh; }
+        .sidebar-wrapper { background: white; box-shadow: 2px 0 10px rgba(0,0,0,0.08); position: fixed; left: 0; top: 0; width: 300px; height: 100vh; overflow-y: auto; z-index: 100; }
+        .content-wrapper { grid-column: 2; padding: 30px 40px; overflow-y: auto; background: #f5f7fa; }
+        .content-header { background: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .content-header h1 { color: #2c3e50; font-size: 28px; margin: 0; font-weight: 700; }
+        .content-main { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .livraison-card { background: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #3498db; }
+        .livraison-card h3 { color: #2c3e50; margin: 0 0 10px 0; font-size: 18px; }
+        .livraison-info { color: #666; font-size: 14px; margin-bottom: 15px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; color: #333; font-weight: 600; margin-bottom: 8px; }
+        .form-group input, .form-group textarea { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 4px; font-size: 14px; }
+        .form-group input:focus, .form-group textarea:focus { outline: none; border-color: #3498db; }
+        .btn { padding: 10px 20px; background: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; transition: all 0.3s; }
+        .btn:hover { background: #229954; }
+        .empty-state { text-align: center; padding: 60px 30px; color: #999; }
+        .alert { padding: 15px; border-radius: 4px; margin-bottom: 20px; }
+        .alert-success { background: #d4edda; color: #155724; }
+        .alert-danger { background: #f8d7da; color: #721c24; }
+        @media (max-width: 768px) { .page-wrapper { grid-template-columns: 1fr; } .sidebar-wrapper { width: 100%; height: auto; position: relative; } .content-wrapper { grid-column: 1; padding: 15px; } }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <div id="sidebar-wrapper"></div>
+        <div class="content-wrapper">
+            <div class="content-header">
+                <h1>✅ Évaluer les Livraisons</h1>
+                <p>Evaluez et notez les travaux soumis par les étudiants</p>
+            </div>
+            <div class="content-main">
+                <div id="alertBox"></div>
+                <div id="livraisonsContainer"></div>
+            </div>
+        </div>
+    </div>
+    <script src="auth.js"></script>
+    <script src="sidebar.js"></script>
+    <script>
+        window.addEventListener('load', function() {
+            if (!isLoggedIn() || !['directeur', 'formateur'].includes(getCurrentUser().role)) {
+                window.location.href = 'login.html';
+            }
+            loadLivraisons();
+        });
+        function loadLivraisons() {
+            const user = getCurrentUser();
+            const livraisons = JSON.parse(localStorage.getItem('livraisons') || '[]');
+            const travaux = JSON.parse(localStorage.getItem('travaux') || '[]');
+            const users = JSON.parse(localStorage.getItem('app_users') || '[]');
+            let filtered = livraisons;
+            if (user.role === 'formateur') {
+                const myTravaux = travaux.filter(t => t.formateur === user.email || t.formateur === user.identifier);
+                const myTravailIds = myTravaux.map(t => t.id);
+                filtered = livraisons.filter(l => myTravailIds.includes(l.travailId));
+            }
+            const byTravail = {};
+            filtered.forEach(livr => {
+                if (!byTravail[livr.travailId]) {
+                    byTravail[livr.travailId] = [];
+                }
+                byTravail[livr.travailId].push(livr);
+            });
+            let html = '';
+            Object.entries(byTravail).forEach(([travailId, livrList]) => {
+                const travail = travaux.find(t => t.id === travailId);
+                if (!travail) return;
+                html += `<h2 style="color: #2c3e50; margin-top: 30px; margin-bottom: 20px; font-size: 20px;">📝 ${travail.titre}</h2>`;
+                livrList.forEach(livr => {
+                    const etud = users.find(u => u.id === livr.etudiantId || u.identifier === livr.etudiantId);
+                    const evalued = livr.note !== null && livr.note !== undefined;
+                    html += `<div class="livraison-card">
+                        <h3>👨‍🎓 ${etud ? etud.identifier : 'Étudiant'}</h3>
+                        <div class="livraison-info">
+                            Statut: <strong>${livr.statut}</strong> | 
+                            Date: ${new Date(livr.dateRemise || new Date()).toLocaleDateString('fr-FR')}
+                            ${evalued ? `| Note: <strong>${livr.note}/20</strong>` : ''}
+                        </div>
+                        <form onsubmit="evaluer(event, '${livr.id}', '${etud ? etud.id : ''}')" style="margin-top: 15px;">
+                            <div class="form-group">
+                                <label>Note (0-20) *</label>
+                                <input type="number" min="0" max="20" step="0.5" value="${livr.note || ''}" placeholder="Ex: 15" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Remarques</label>
+                                <textarea placeholder="Remarques..." rows="3">${livr.remarques || ''}</textarea>
+                            </div>
+                            <button type="submit" class="btn">✅ Valider l'Évaluation</button>
+                        </form>
+                    </div>`;
+                });
+            });
+            if (!html) {
+                html = '<div class="empty-state"><div style="font-size: 80px;">📋</div><h2>Aucune livraison à évaluer</h2></div>';
+            }
+            document.getElementById('livraisonsContainer').innerHTML = html;
+        }
+        function evaluer(event, livraisonId, etudiantId) {
+            event.preventDefault();
+            const form = event.target;
+            const note = form.querySelector('input[type="number"]').value;
+            const remarques = form.querySelector('textarea').value;
+            const livraisons = JSON.parse(localStorage.getItem('livraisons') || '[]');
+            const livr = livraisons.find(l => l.id === livraisonId);
+            if (livr) {
+                livr.note = parseFloat(note);
+                livr.remarques = remarques;
+                livr.dateEvaluation = new Date().toISOString();
+                localStorage.setItem('livraisons', JSON.stringify(livraisons));
+                showAlert('✅ Livraison évaluée avec succès', 'success');
+                loadLivraisons();
+            }
+        }
+        function showAlert(msg, type) {
+            document.getElementById('alertBox').innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+            setTimeout(() => document.getElementById('alertBox').innerHTML = '', 3000);
+        }
+    </script>
+</body>
+</html>

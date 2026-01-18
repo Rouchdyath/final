@@ -1,0 +1,193 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import os
+
+frontend_dir = r"c:\Users\LENOVO\Documents\genie logiciel\projet_SIL3\frontend"
+
+files = {
+    'liste-promotions.html': '''<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste Promotions - EduSphère</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; background: #f5f7fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        .page-wrapper { display: grid; grid-template-columns: 300px 1fr; width: 100%; min-height: 100vh; }
+        .sidebar-wrapper { background: white; box-shadow: 2px 0 10px rgba(0,0,0,0.08); position: fixed; left: 0; top: 0; width: 300px; height: 100vh; overflow-y: auto; z-index: 100; }
+        .content-wrapper { grid-column: 2; padding: 30px 40px; overflow-y: auto; background: #f5f7fa; }
+        .content-header { background: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .content-header h1 { color: #2c3e50; font-size: 28px; margin: 0; font-weight: 700; }
+        .btn-primary { display: inline-block; padding: 10px 20px; background: #3498db; color: white; text-decoration: none; border-radius: 4px; margin-top: 15px; font-weight: 600; }
+        .btn-primary:hover { background: #2980b9; }
+        .content-main { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        table th { background: #f0f0f0; color: #2c3e50; padding: 12px; text-align: left; font-weight: 600; border-bottom: 2px solid #ddd; }
+        table td { padding: 12px; border-bottom: 1px solid #eee; }
+        table tr:hover { background: #f9f9f9; }
+        .btn { padding: 8px 12px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; }
+        .btn:hover { background: #2980b9; }
+        .btn-danger { background: #e74c3c; }
+        .btn-danger:hover { background: #c0392b; }
+        .empty-state { text-align: center; padding: 60px 30px; color: #999; }
+        @media (max-width: 768px) { .page-wrapper { grid-template-columns: 1fr; } .sidebar-wrapper { width: 100%; height: auto; position: relative; } .content-wrapper { grid-column: 1; padding: 15px; } }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <div id="sidebar-wrapper"></div>
+        <div class="content-wrapper">
+            <div class="content-header">
+                <h1>📚 Liste des Promotions</h1>
+                <p>Toutes les promotions du système</p>
+                <a href="creer-promotion.html" class="btn-primary">+ Créer une Promotion</a>
+            </div>
+            <div class="content-main">
+                <div id="promotionsContainer"></div>
+            </div>
+        </div>
+    </div>
+    <script src="auth.js"></script>
+    <script src="sidebar.js"></script>
+    <script>
+        window.addEventListener('load', function() {
+            if (!isLoggedIn()) {
+                window.location.href = 'login.html';
+            }
+            loadPromotions();
+        });
+        function loadPromotions() {
+            const promotions = JSON.parse(localStorage.getItem('promotions') || '[]');
+            let html = '';
+            if (promotions.length === 0) {
+                html = '<div class="empty-state"><div style="font-size: 80px;">📋</div><h2>Aucune promotion</h2></div>';
+            } else {
+                html = '<table><thead><tr><th>Nom</th><th>Code</th><th>Niveau</th><th>Début</th><th>Fin</th><th>Étudiants</th><th>Actions</th></tr></thead><tbody>';
+                promotions.forEach(p => {
+                    html += `<tr>
+                        <td><strong>${p.nom}</strong></td>
+                        <td>${p.code}</td>
+                        <td>${p.niveau || '-'}</td>
+                        <td>${new Date(p.dateDebut).toLocaleDateString('fr-FR')}</td>
+                        <td>${new Date(p.dateFin).toLocaleDateString('fr-FR')}</td>
+                        <td>${(p.etudiants || []).length}</td>
+                        <td>
+                            <button class="btn" onclick="alert('Details de ' + '${p.nom}')">Voir</button>
+                            <button class="btn btn-danger" onclick="deletePromotion('${p.id}')">✕</button>
+                        </td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+            }
+            document.getElementById('promotionsContainer').innerHTML = html;
+        }
+        function deletePromotion(id) {
+            if (confirm('Êtes-vous sûr ?')) {
+                let promotions = JSON.parse(localStorage.getItem('promotions') || '[]');
+                promotions = promotions.filter(p => p.id !== id);
+                localStorage.setItem('promotions', JSON.stringify(promotions));
+                loadPromotions();
+            }
+        }
+    </script>
+</body>
+</html>''',
+
+    'liste-etudiants.html': '''<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste Étudiants - EduSphère</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; background: #f5f7fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        .page-wrapper { display: grid; grid-template-columns: 300px 1fr; width: 100%; min-height: 100vh; }
+        .sidebar-wrapper { background: white; box-shadow: 2px 0 10px rgba(0,0,0,0.08); position: fixed; left: 0; top: 0; width: 300px; height: 100vh; overflow-y: auto; z-index: 100; }
+        .content-wrapper { grid-column: 2; padding: 30px 40px; overflow-y: auto; background: #f5f7fa; }
+        .content-header { background: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .content-header h1 { color: #2c3e50; font-size: 28px; margin: 0; font-weight: 700; }
+        .btn-primary { display: inline-block; padding: 10px 20px; background: #3498db; color: white; text-decoration: none; border-radius: 4px; margin-top: 15px; font-weight: 600; }
+        .btn-primary:hover { background: #2980b9; }
+        .content-main { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        table th { background: #f0f0f0; color: #2c3e50; padding: 12px; text-align: left; font-weight: 600; border-bottom: 2px solid #ddd; }
+        table td { padding: 12px; border-bottom: 1px solid #eee; }
+        table tr:hover { background: #f9f9f9; }
+        .btn { padding: 8px 12px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; }
+        .btn:hover { background: #2980b9; }
+        .btn-danger { background: #e74c3c; }
+        .btn-danger:hover { background: #c0392b; }
+        .empty-state { text-align: center; padding: 60px 30px; color: #999; }
+        @media (max-width: 768px) { .page-wrapper { grid-template-columns: 1fr; } .sidebar-wrapper { width: 100%; height: auto; position: relative; } .content-wrapper { grid-column: 1; padding: 15px; } }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <div id="sidebar-wrapper"></div>
+        <div class="content-wrapper">
+            <div class="content-header">
+                <h1>👨‍🎓 Liste des Étudiants</h1>
+                <p>Tous les étudiants du système</p>
+                <a href="creer-etudiant.html" class="btn-primary">+ Créer un Étudiant</a>
+            </div>
+            <div class="content-main">
+                <div id="etudiantsContainer"></div>
+            </div>
+        </div>
+    </div>
+    <script src="auth.js"></script>
+    <script src="sidebar.js"></script>
+    <script>
+        window.addEventListener('load', function() {
+            if (!isLoggedIn()) {
+                window.location.href = 'login.html';
+            }
+            loadEtudiants();
+        });
+        function loadEtudiants() {
+            const users = JSON.parse(localStorage.getItem('app_users') || '[]');
+            const etudiants = users.filter(u => u.role === 'etudiant');
+            let html = '';
+            if (etudiants.length === 0) {
+                html = '<div class="empty-state"><div style="font-size: 80px;">👨‍🎓</div><h2>Aucun étudiant</h2></div>';
+            } else {
+                html = '<table><thead><tr><th>Identifiant</th><th>Email</th><th>Nom</th><th>Créé</th><th>Actions</th></tr></thead><tbody>';
+                etudiants.forEach(e => {
+                    html += `<tr>
+                        <td><strong>${e.identifier}</strong></td>
+                        <td>${e.email}</td>
+                        <td>${e.nom || '-'}</td>
+                        <td>${new Date(e.dateCreation).toLocaleDateString('fr-FR')}</td>
+                        <td>
+                            <button class="btn" onclick="alert('Details de ' + '${e.identifier}')">Voir</button>
+                            <button class="btn btn-danger" onclick="deleteEtudiant('${e.id}')">✕</button>
+                        </td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+            }
+            document.getElementById('etudiantsContainer').innerHTML = html;
+        }
+        function deleteEtudiant(id) {
+            if (confirm('Êtes-vous sûr ?')) {
+                let users = JSON.parse(localStorage.getItem('app_users') || '[]');
+                users = users.filter(u => u.id !== id);
+                localStorage.setItem('app_users', JSON.stringify(users));
+                loadEtudiants();
+            }
+        }
+    </script>
+</body>
+</html>'''
+}
+
+for filename, content in files.items():
+    filepath = os.path.join(frontend_dir, filename)
+    with open(filepath, 'w', encoding='utf-8') as f:
+        f.write(content)
+    print(f"✅ {filename} créé")
+
+print("\n✅ Pages de liste créées !")

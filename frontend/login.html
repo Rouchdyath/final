@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion - EduSphère</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="auth.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #1a252f 0%, #2c3e50 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 0;
+            width: 100%;
+            max-width: 500px;
+            overflow: hidden;
+        }
+
+        .login-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 40px 30px 30px;
+            text-align: center;
+        }
+
+        .login-header h1 {
+            margin: 0 0 10px 0;
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .login-header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .login-body {
+            padding: 40px 30px;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+        }
+
+        .form-section h3 {
+            font-size: 16px;
+            color: #333;
+            margin: 0 0 20px 0;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+
+        .role-buttons {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .role-btn {
+            padding: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            color: #333;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .role-btn:hover {
+            border-color: #007bff;
+            background: #f8f9ff;
+        }
+
+        .role-btn.active {
+            background: #007bff;
+            border-color: #007bff;
+            color: white;
+        }
+
+        .role-btn .icon {
+            font-size: 24px;
+        }
+
+        .role-btn .text {
+            flex: 1;
+            text-align: left;
+        }
+
+        .role-btn .checkmark {
+            font-size: 20px;
+            opacity: 0;
+        }
+
+        .role-btn.active .checkmark {
+            opacity: 1;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .input-group {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 12px;
+            font-size: 18px;
+            color: #999;
+            pointer-events: none;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px 12px 45px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+        }
+
+        .forgot-password-link {
+            display: inline-block;
+            color: #007bff;
+            text-decoration: none;
+            font-size: 13px;
+            margin-top: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .forgot-password-link:hover {
+            text-decoration: underline;
+            color: #0056b3;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .demo-credentials {
+            background: #f0f8ff;
+            border: 1px solid #b3d9ff;
+            border-left: 4px solid #0066cc;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 25px;
+            font-size: 13px;
+            color: #004085;
+        }
+
+        .demo-credentials h4 {
+            margin: 0 0 10px 0;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .demo-credentials p {
+            margin: 5px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .error-message {
+            display: none;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .success-message {
+            display: none;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        @media (max-width: 600px) {
+            .login-container {
+                margin: 20px;
+            }
+
+            .login-header {
+                padding: 30px 20px 20px;
+            }
+
+            .login-header h1 {
+                font-size: 24px;
+            }
+
+            .login-body {
+                padding: 30px 20px;
+            }
+        }
+
+        /* Modal pour mot de passe oublié */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 450px;
+            padding: 0;
+            overflow: hidden;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 25px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .modal-step {
+            display: none;
+        }
+
+        .modal-step.active {
+            display: block;
+        }
+
+        .modal-step h3 {
+            margin: 0 0 20px 0;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .reset-success-message {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+
+        .modal-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .modal-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(44, 62, 80, 0.3);
+        }
+
+        .code-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+            box-sizing: border-box;
+            margin-bottom: 15px;
+        }
+
+        .code-input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>Connexion</h1>
+            <p>🌍 EduSphère - Plateforme d'Excellence Pédagogique</p>
+        </div>
+
+        <div class="login-body">
+            <div id="errorMessage" class="error-message"></div>
+            <div id="successMessage" class="success-message"></div>
+
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <!-- Sélection du rôle -->
+                <div class="form-section">
+                    <h3>Sélectionnez votre rôle</h3>
+                    <div class="role-buttons">
+                        <button type="button" class="role-btn" data-role="etudiant" onclick="selectRole(this)">
+                            <span class="icon">👤</span>
+                            <span class="text">Étudiant</span>
+                            <span class="checkmark">✓</span>
+                        </button>
+                        <button type="button" class="role-btn" data-role="formateur" onclick="selectRole(this)">
+                            <span class="icon">📚</span>
+                            <span class="text">Formateur</span>
+                            <span class="checkmark">✓</span>
+                        </button>
+                        <button type="button" class="role-btn" data-role="directeur" onclick="selectRole(this)">
+                            <span class="icon">👁️</span>
+                            <span class="text">Directeur</span>
+                            <span class="checkmark">✓</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Identifiants -->
+                <div class="form-section">
+                    <h3>Identifiants</h3>
+                    
+                    <div class="form-group">
+                        <label for="identifier">👤 Nom d'utilisateur ou Email</label>
+                        <div class="input-group">
+                            <span class="input-icon">👤</span>
+                            <input 
+                                type="text" 
+                                id="identifier" 
+                                name="identifier" 
+                                placeholder="Ex: jean.dupont ou jean@example.com"
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">🔐 Mot de passe</label>
+                        <div class="input-group">
+                            <span class="input-icon">🔐</span>
+                            <input 
+                                type="password" 
+                                id="password" 
+                                name="password" 
+                                placeholder="Entrez votre mot de passe"
+                                required
+                            >
+                        </div>
+                        <a href="#" class="forgot-password-link" onclick="openForgotPasswordModal(event)">
+                            🔑 Mot de passe oublié?
+                        </a>
+                    </div>
+                </div>
+
+                <button type="submit" class="login-btn">Se Connecter</button>
+            </form>
+
+            <!-- Informations de démo -->
+            <div class="demo-credentials">
+                <h4>🔐 Mode Démo</h4>
+                <p><strong>Rôle:</strong> Sélectionnez un rôle ci-dessus</p>
+                <p><strong>Identifiant:</strong> N'importe quel texte</p>
+                <p><strong>Mot de passe:</strong> N'importe quel texte</p>
+                <p style="margin-top: 10px; font-style: italic;">Vous serez connecté immédiatement.</p>
+            </div>
+
+            <!-- Lien d'inscription -->
+            <div style="text-align: center; margin-top: 25px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+                <p style="color: #666; font-size: 14px; margin: 0 0 10px 0;">
+                    Vous n'avez pas de compte?
+                </p>
+                <a href="signup.html" style="display: inline-block; padding: 12px 24px; background: #28a745; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; transition: all 0.3s; font-size: 14px;">
+                    S'inscrire ici →
+                </a>
+                <style>
+                    a[href="signup.html"]:hover {
+                        background: #218838;
+                        transform: translateY(-2px);
+                        box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+                    }
+                </style>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Mot de passe oublié -->
+    <div id="forgotPasswordModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🔑 Réinitialiser le mot de passe</h2>
+                <button class="modal-close" onclick="closeForgotPasswordModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <!-- Étape 1: Entrer l'email/identifiant -->
+                <div id="step1" class="modal-step active">
+                    <h3>Étape 1: Vérification du compte</h3>
+                    <p style="color: #666; font-size: 13px; margin-bottom: 20px;">
+                        Entrez votre email ou nom d'utilisateur associé à votre compte.
+                    </p>
+                    <div class="form-group">
+                        <label for="forgotEmail">📧 Email ou Identifiant</label>
+                        <div class="input-group">
+                            <span class="input-icon">📧</span>
+                            <input 
+                                type="text" 
+                                id="forgotEmail" 
+                                placeholder="Ex: jean@example.com ou jean.dupont"
+                                required
+                            >
+                        </div>
+                    </div>
+                    <button type="button" class="modal-btn" onclick="sendResetCode()">
+                        📨 Envoyer le code de réinitialisation
+                    </button>
+                </div>
+
+                <!-- Étape 2: Vérifier le code -->
+                <div id="step2" class="modal-step">
+                    <h3>Étape 2: Vérification du code</h3>
+                    <div class="reset-success-message">
+                        ✅ Un code de réinitialisation a été généré et envoyé par email.
+                    </div>
+                    <p style="color: #666; font-size: 13px; margin-bottom: 20px;">
+                        Entrez le code que vous avez reçu par email.
+                    </p>
+                    <input 
+                        type="text" 
+                        id="resetCode" 
+                        class="code-input" 
+                        placeholder="Entrez le code"
+                        maxlength="6"
+                    >
+                    <button type="button" class="modal-btn" onclick="verifyResetCode()">
+                        ✓ Vérifier le code
+                    </button>
+                    <button type="button" class="modal-btn" onclick="goBackToStep1()" style="background: #6c757d;">
+                        ← Retour
+                    </button>
+                </div>
+
+                <!-- Étape 3: Nouveau mot de passe -->
+                <div id="step3" class="modal-step">
+                    <h3>Étape 3: Définir un nouveau mot de passe</h3>
+                    <div class="form-group">
+                        <label for="newPassword">🔐 Nouveau mot de passe</label>
+                        <div class="input-group">
+                            <span class="input-icon">🔐</span>
+                            <input 
+                                type="password" 
+                                id="newPassword" 
+                                placeholder="Min. 8 caractères"
+                                required
+                            >
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">🔐 Confirmer le mot de passe</label>
+                        <div class="input-group">
+                            <span class="input-icon">🔐</span>
+                            <input 
+                                type="password" 
+                                id="confirmPassword" 
+                                placeholder="Confirmez le mot de passe"
+                                required
+                            >
+                        </div>
+                    </div>
+                    <button type="button" class="modal-btn" onclick="resetPassword()">
+                        ✓ Réinitialiser le mot de passe
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let resetState = {
+            email: null,
+            code: null
+        };
+
+        function openForgotPasswordModal(event) {
+            event.preventDefault();
+            document.getElementById('forgotPasswordModal').classList.add('active');
+            resetState = { email: null, code: null };
+            showStep(1);
+        }
+
+        function closeForgotPasswordModal() {
+            document.getElementById('forgotPasswordModal').classList.remove('active');
+            document.getElementById('forgotEmail').value = '';
+            document.getElementById('resetCode').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+        }
+
+        function showStep(step) {
+            document.getElementById('step1').classList.remove('active');
+            document.getElementById('step2').classList.remove('active');
+            document.getElementById('step3').classList.remove('active');
+            document.getElementById('step' + step).classList.add('active');
+        }
+
+        function sendResetCode() {
+            const email = document.getElementById('forgotEmail').value.trim();
+            
+            if (!email) {
+                alert('❌ Veuillez entrer votre email ou nom d\'utilisateur');
+                return;
+            }
+
+            // Vérifier si l'utilisateur existe
+            const users = JSON.parse(localStorage.getItem('app_users') || '[]');
+            const user = users.find(u => u.email === email || u.identifier === email);
+
+            if (!user) {
+                alert('❌ Aucun compte trouvé avec cet email ou identifiant');
+                return;
+            }
+
+            // Générer un code aléatoire
+            const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+            resetState.email = email;
+            resetState.code = code;
+
+            // En démo, afficher le code dans la console et un message
+            console.log('🔐 Code de réinitialisation généré:', code);
+            alert('📨 Code de réinitialisation: ' + code + '\n\n(En production, ce code serait envoyé par email)');
+
+            showStep(2);
+        }
+
+        function verifyResetCode() {
+            const enteredCode = document.getElementById('resetCode').value.trim();
+
+            if (!enteredCode) {
+                alert('❌ Veuillez entrer le code');
+                return;
+            }
+
+            if (enteredCode !== resetState.code) {
+                alert('❌ Code incorrect');
+                return;
+            }
+
+            alert('✅ Code vérifié avec succès!');
+            showStep(3);
+        }
+
+        function goBackToStep1() {
+            document.getElementById('resetCode').value = '';
+            showStep(1);
+        }
+
+        function resetPassword() {
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (!newPassword || !confirmPassword) {
+                alert('❌ Veuillez remplir tous les champs');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                alert('❌ Les mots de passe ne correspondent pas');
+                return;
+            }
+
+            if (newPassword.length < 8) {
+                alert('❌ Le mot de passe doit faire au moins 8 caractères');
+                return;
+            }
+
+            // Mettre à jour le mot de passe dans localStorage
+            const users = JSON.parse(localStorage.getItem('app_users') || '[]');
+            const userIndex = users.findIndex(u => u.email === resetState.email || u.identifier === resetState.email);
+
+            if (userIndex !== -1) {
+                users[userIndex].password = btoa(newPassword);
+                localStorage.setItem('app_users', JSON.stringify(users));
+
+                alert('✅ Mot de passe réinitialisé avec succès!\n\nVous pouvez maintenant vous connecter avec votre nouveau mot de passe.');
+                closeForgotPasswordModal();
+            }
+        }
+
+        let selectedRole = null;
+
+        function selectRole(button) {
+            // Retirer la sélection précédente
+            document.querySelectorAll('.role-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Ajouter la sélection au bouton cliqué
+            button.classList.add('active');
+            selectedRole = button.getAttribute('data-role');
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+
+            const errorDiv = document.getElementById('errorMessage');
+            const successDiv = document.getElementById('successMessage');
+            
+            // Masquer les messages
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+
+            // Vérifier que le rôle est sélectionné
+            if (!selectedRole) {
+                errorDiv.textContent = '❌ Veuillez sélectionner un rôle.';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            const identifier = document.getElementById('identifier').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            if (!identifier || !password) {
+                errorDiv.textContent = '❌ Veuillez remplir tous les champs.';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            // Connexion
+            try {
+                const user = login(identifier, password, selectedRole);
+                
+                successDiv.textContent = `✅ Bienvenue ${user.identifier} (${formatRoleName(selectedRole)})!`;
+                successDiv.style.display = 'block';
+
+                // Rediriger après 1.5 secondes
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1500);
+            } catch (error) {
+                errorDiv.textContent = `❌ Erreur de connexion: ${error.message}`;
+                errorDiv.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>

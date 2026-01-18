@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S'inscrire - EduSphère</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="auth.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #1a252f 0%, #2c3e50 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        .signup-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 0;
+            width: 100%;
+            max-width: 500px;
+            overflow: hidden;
+        }
+
+        .signup-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 40px 30px 30px;
+            text-align: center;
+        }
+
+        .signup-header h1 {
+            margin: 0 0 10px 0;
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .signup-header .icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+        }
+
+        .signup-header p {
+            margin: 0;
+            font-size: 14px;
+            opacity: 0.95;
+        }
+
+        .signup-body {
+            padding: 40px 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.3s;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .password-requirements {
+            background: #f8f9fa;
+            border-left: 4px solid #ffc107;
+            padding: 12px 15px;
+            border-radius: 4px;
+            margin-top: 8px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .password-requirements ul {
+            margin: 5px 0 0 20px;
+            padding: 0;
+        }
+
+        .password-requirements li {
+            margin: 4px 0;
+        }
+
+        .requirement {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            margin: 4px 0;
+        }
+
+        .requirement-icon {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            flex-shrink: 0;
+        }
+
+        .requirement-icon.pending {
+            background: #e0e0e0;
+            color: #999;
+        }
+
+        .requirement-icon.valid {
+            background: #28a745;
+            color: white;
+        }
+
+        .role-selection {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .role-option {
+            position: relative;
+        }
+
+        .role-option input[type="radio"] {
+            display: none;
+        }
+
+        .role-option label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 0;
+            text-transform: none;
+            letter-spacing: normal;
+            gap: 10px;
+            background: white;
+        }
+
+        .role-option input[type="radio"]:checked + label {
+            border-color: #667eea;
+            background: #f0f4ff;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .role-icon {
+            font-size: 32px;
+        }
+
+        .role-text {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-signup {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            flex: 2;
+        }
+
+        .btn-signup:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-signup:active {
+            transform: translateY(0);
+        }
+
+        .btn-back {
+            background: #e0e0e0;
+            color: #333;
+            flex: 1;
+        }
+
+        .btn-back:hover {
+            background: #d0d0d0;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+
+        .message.error {
+            display: block;
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .message.success {
+            display: block;
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .divider {
+            text-align: center;
+            color: #999;
+            margin: 25px 0 20px;
+            font-size: 12px;
+            position: relative;
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #e0e0e0;
+            z-index: 0;
+        }
+
+        .divider span {
+            background: white;
+            padding: 0 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .login-link {
+            text-align: center;
+            font-size: 13px;
+            color: #666;
+            margin-top: 20px;
+        }
+
+        .login-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s;
+        }
+
+        .login-link a:hover {
+            color: #764ba2;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .loading {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .verification-step {
+            display: none;
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        .verification-step.active {
+            display: block;
+        }
+
+        .verification-code-input {
+            font-size: 32px !important;
+            letter-spacing: 10px;
+            text-align: center;
+            padding: 20px !important;
+        }
+
+        @media (max-width: 480px) {
+            .signup-container {
+                border-radius: 0;
+            }
+
+            .signup-header {
+                padding: 30px 20px;
+            }
+
+            .signup-header h1 {
+                font-size: 24px;
+            }
+
+            .signup-body {
+                padding: 25px 20px;
+            }
+
+            .role-selection {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="signup-container">
+        <div class="signup-header">
+            <div class="icon">📝</div>
+            <h1>S'inscrire</h1>
+            <p>Créez votre compte pour accéder au système</p>
+        </div>
+
+        <div class="signup-body">
+            <!-- Formulaire d'inscription -->
+            <div id="signupForm" class="verification-step active">
+                <div id="errorMessage" class="message error"></div>
+                <div id="successMessage" class="message success"></div>
+
+                <form id="registerForm" onsubmit="handleSignup(event)">
+                    <div class="form-group">
+                        <label>📧 Email</label>
+                        <input type="email" id="email" name="email" required placeholder="votre@email.com" 
+                            onchange="validateEmail(this.value)">
+                    </div>
+
+                    <div class="form-group">
+                        <label>👤 Nom d'utilisateur</label>
+                        <input type="text" id="identifier" name="identifier" required 
+                            placeholder="Votre nom d'utilisateur" minlength="3">
+                    </div>
+
+                    <div class="form-group">
+                        <label>🔒 Mot de passe</label>
+                        <input type="password" id="password" name="password" required 
+                            placeholder="Au moins 8 caractères" minlength="8"
+                            oninput="validatePassword(this.value)">
+                        <div class="password-requirements">
+                            <div class="requirement">
+                                <span class="requirement-icon pending" id="req-length">✓</span>
+                                <span>Au moins 8 caractères</span>
+                            </div>
+                            <div class="requirement">
+                                <span class="requirement-icon pending" id="req-upper">✓</span>
+                                <span>Une lettre majuscule</span>
+                            </div>
+                            <div class="requirement">
+                                <span class="requirement-icon pending" id="req-lower">✓</span>
+                                <span>Une lettre minuscule</span>
+                            </div>
+                            <div class="requirement">
+                                <span class="requirement-icon pending" id="req-number">✓</span>
+                                <span>Un chiffre</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>🔐 Confirmer le mot de passe</label>
+                        <input type="password" id="confirmPassword" name="confirmPassword" required 
+                            placeholder="Retapez votre mot de passe">
+                    </div>
+
+                    <div class="form-group">
+                        <label>👥 Rôle</label>
+                        <div class="role-selection">
+                            <div class="role-option">
+                                <input type="radio" id="role-etudiant" name="role" value="etudiant" checked>
+                                <label for="role-etudiant">
+                                    <span class="role-icon">👨‍🎓</span>
+                                    <span class="role-text">Étudiant</span>
+                                </label>
+                            </div>
+                            <div class="role-option">
+                                <input type="radio" id="role-formateur" name="role" value="formateur">
+                                <label for="role-formateur">
+                                    <span class="role-icon">👨‍🏫</span>
+                                    <span class="role-text">Formateur</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-back" onclick="window.location.href='login.html'">
+                            ← Retour
+                        </button>
+                        <button type="submit" class="btn btn-signup">S'inscrire →</button>
+                    </div>
+                </form>
+
+                <div class="login-link">
+                    Vous avez déjà un compte? <a href="login.html">Se connecter</a>
+                </div>
+            </div>
+
+            <!-- Étape de vérification du code - COMMENTÉE (désactivée pour le moment)
+            <div id="verificationForm" class="verification-step">
+                <div style="margin-bottom: 30px;">
+                    <div style="font-size: 60px; margin-bottom: 20px;">✉️</div>
+                    <h2 style="margin: 0 0 10px 0; color: #333; font-size: 20px;">Vérifiez votre Email</h2>
+                    <p style="color: #666; font-size: 14px; margin: 0;">
+                        Un code de vérification a été envoyé à votre adresse email
+                    </p>
+                    <p id="verifyEmailDisplay" style="color: #667eea; font-weight: 600; margin-top: 10px;"></p>
+                </div>
+
+                <form onsubmit="handleVerification(event)">
+                    <div class="form-group">
+                        <label>📬 Code de vérification</label>
+                        <input type="text" id="verificationCode" name="verificationCode" required 
+                            placeholder="Entrez le code à 6 chiffres"
+                            maxlength="6" pattern="[0-9]{6}" class="verification-code-input">
+                    </div>
+
+                    <p style="color: #666; font-size: 12px; text-align: center; margin: 15px 0;">
+                        Vous n'avez pas reçu le code? 
+                        <a href="#" onclick="resendCode(event)" style="color: #667eea; text-decoration: none;">Renvoyer</a>
+                    </p>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-back" onclick="goBackToSignup()">
+                            ← Retour
+                        </button>
+                        <button type="submit" class="btn btn-signup">Vérifier →</button>
+                    </div>
+                </form>
+            </div>
+            --> FIN DE VÉRIFICATION PAR EMAIL (DÉSACTIVÉE)
+
+            <!-- Étape de succès - COMMENTÉE (auto-redirect maintenant)
+            <div id="successStep" class="verification-step">
+                <div style="text-align: center; padding: 20px 0;">
+                    <div style="font-size: 80px; margin-bottom: 20px;">✅</div>
+                    <h2 style="margin: 0 0 10px 0; color: #28a745; font-size: 24px;">Inscription Réussie!</h2>
+                    <p style="color: #666; font-size: 14px; margin: 10px 0;">
+                        Votre compte a été créé avec succès.
+                    </p>
+                    <p style="color: #666; font-size: 14px; margin: 10px 0;">
+                        Vous serez redirigé vers la page de connexion...
+                    </p>
+                </div>
+            </div>
+            --> FIN DE MESSAGE DE SUCCÈS
+        </div>
+    </div>
+
+    <script>
+        // Simuler le stockage des utilisateurs (à remplacer par une vraie API)
+        const USERS_STORAGE_KEY = 'app_users';
+
+        function showMessage(type, text) {
+            const errorEl = document.getElementById('errorMessage');
+            const successEl = document.getElementById('successMessage');
+            
+            errorEl.style.display = 'none';
+            successEl.style.display = 'none';
+            
+            if (type === 'error') {
+                errorEl.textContent = text;
+                errorEl.style.display = 'block';
+            } else if (type === 'success') {
+                successEl.textContent = text;
+                successEl.style.display = 'block';
+            }
+        }
+
+        function validateEmail(email) {
+            // Ici, on pourrait appeler un vrai API
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        function validatePassword(password) {
+            const requirements = {
+                'req-length': password.length >= 8,
+                'req-upper': /[A-Z]/.test(password),
+                'req-lower': /[a-z]/.test(password),
+                'req-number': /[0-9]/.test(password)
+            };
+
+            Object.entries(requirements).forEach(([id, valid]) => {
+                const element = document.getElementById(id);
+                if (valid) {
+                    element.classList.add('valid');
+                    element.classList.remove('pending');
+                } else {
+                    element.classList.add('pending');
+                    element.classList.remove('valid');
+                }
+            });
+
+            return Object.values(requirements).every(r => r);
+        }
+
+        async function handleSignup(event) {
+            event.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const identifier = document.getElementById('identifier').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const role = document.querySelector('input[name="role"]:checked').value;
+
+            // Validation
+            if (!validateEmail(email)) {
+                showMessage('error', '❌ Email invalide');
+                return;
+            }
+
+            if (identifier.length < 3) {
+                showMessage('error', '❌ Le nom d\'utilisateur doit contenir au moins 3 caractères');
+                return;
+            }
+
+            if (!validatePassword(password)) {
+                showMessage('error', '❌ Le mot de passe ne respecte pas les critères');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showMessage('error', '❌ Les mots de passe ne correspondent pas');
+                return;
+            }
+
+            // Vérifier que l'email n'existe pas déjà
+            let users = JSON.parse(localStorage.getItem(USERS_STORAGE_KEY) || '[]');
+            if (users.some(u => u.email === email)) {
+                showMessage('error', '❌ Cet email est déjà utilisé');
+                return;
+            }
+
+            if (users.some(u => u.identifier === identifier)) {
+                showMessage('error', '❌ Ce nom d\'utilisateur est déjà utilisé');
+                return;
+            }
+
+            // ✅ CRÉER L'UTILISATEUR DIRECTEMENT (sans vérification email)
+            const newUser = {
+                id: Math.random().toString(36).substr(2, 9),
+                email,
+                identifier,
+                password: btoa(password), // Encodage basique
+                role,
+                verified: true, // Directement vérifié
+                registrationTime: new Date().getTime()
+            };
+
+            users.push(newUser);
+            localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+
+            console.log('✅ Utilisateur créé:', newUser);
+            showMessage('success', '✅ Inscription réussie! Redirection vers login...');
+
+            // Rediriger directement vers login après 1 seconde
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 1500);
+        }
+
+        // FONCTIONS DE VÉRIFICATION PAR EMAIL - COMMENTÉES (DÉSACTIVÉES)
+        /*
+        function goBackToSignup() {
+            document.getElementById('verificationForm').classList.remove('active');
+            document.getElementById('signupForm').classList.add('active');
+            localStorage.removeItem('pendingUser');
+        }
+
+        function resendCode(event) {
+            event.preventDefault();
+            const pendingUser = JSON.parse(localStorage.getItem('pendingUser') || '{}');
+            if (pendingUser.email) {
+                console.log(`📧 Code renvoyé à ${pendingUser.email}: ${pendingUser.verificationCode}`);
+                // Afficher une alerte avec le code
+                alert(`📧 Code renvoyé!\n\n🔐 Votre code de vérification est:\n\n${pendingUser.verificationCode}\n\nVeuillez l'entrer ci-dessous.`);
+                showMessage('success', `✅ Le code a été renvoyé: ${pendingUser.verificationCode}`);
+            } else {
+                showMessage('error', '❌ Erreur: aucun utilisateur en attente');
+            }
+        }
+
+        async function handleVerification(event) {
+            event.preventDefault();
+
+            const verificationCode = document.getElementById('verificationCode').value.trim();
+            const pendingUser = JSON.parse(localStorage.getItem('pendingUser') || '{}');
+
+            console.log('🔍 Vérification du code:');
+            console.log('Code entré:', verificationCode);
+            console.log('Code attendu:', pendingUser.verificationCode);
+            console.log('Correspond:', verificationCode === pendingUser.verificationCode);
+
+            if (!pendingUser.email) {
+                showMessage('error', '❌ Erreur: aucun utilisateur en attente');
+                console.log('❌ Erreur: pendingUser vide');
+                return;
+            }
+
+            if (verificationCode === '' || verificationCode.length !== 6) {
+                showMessage('error', '❌ Entrez un code à 6 chiffres');
+                console.log('❌ Code invalide, longueur:', verificationCode.length);
+                return;
+            }
+
+            if (verificationCode !== pendingUser.verificationCode) {
+                showMessage('error', `❌ Code incorrect. Vous avez entré: ${verificationCode}, attendu: ${pendingUser.verificationCode}`);
+                console.log('❌ Code de vérification incorrect');
+                return;
+            }
+
+            // Code correct - créer l'utilisateur
+            let users = JSON.parse(localStorage.getItem(USERS_STORAGE_KEY) || '[]');
+            
+            const newUser = {
+                id: Math.random().toString(36).substr(2, 9),
+                email: pendingUser.email,
+                identifier: pendingUser.identifier,
+                password: pendingUser.password,
+                role: pendingUser.role,
+                verified: true,
+                registrationTime: pendingUser.registrationTime
+            };
+
+            users.push(newUser);
+            localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+            localStorage.removeItem('pendingUser');
+
+            console.log('✅ Utilisateur créé avec succès:', newUser);
+
+            // Montrer le message de succès
+            document.getElementById('verificationForm').classList.remove('active');
+            document.getElementById('successStep').classList.add('active');
+
+            showMessage('success', '✅ Inscription vérifiée avec succès!');
+
+            // Rediriger après 3 secondes
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 3000);
+        }
+        */
+
+        // Messages de bienvenue
+        window.addEventListener('load', () => {
+            console.log('📝 Page d\'inscription chargée');
+            console.log('ℹ️ En mode démo, les codes sont affichés dans la console');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Débogage - Utilisateurs</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .debug-container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        .users-box {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .user-card {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+        }
+        .btn-clear {
+            background: #e74c3c;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        .btn-clear:hover {
+            background: #c0392b;
+        }
+        .btn-test {
+            background: #27ae60;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        .btn-test:hover {
+            background: #229954;
+        }
+        pre {
+            background: #333;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        .test-form {
+            background: #d4edda;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .test-form input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #999;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .alert {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .alert-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .alert-danger {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-container">
+        <h1>🔍 Débogage - Gestion des Utilisateurs</h1>
+        
+        <div class="users-box">
+            <h2>📊 Utilisateurs Enregistrés</h2>
+            <div id="users-list"></div>
+            <button class="btn-clear" onclick="clearAllUsers()">❌ Effacer Tous les Utilisateurs</button>
+        </div>
+
+        <div class="users-box">
+            <h2>🧪 Test de Connexion</h2>
+            <div class="test-form">
+                <h3>Essayez de vous connecter ici:</h3>
+                <div id="test-message"></div>
+                <input type="text" id="test-identifier" placeholder="Identifiant" required>
+                <input type="password" id="test-password" placeholder="Mot de passe" required>
+                <select id="test-role" required>
+                    <option value="">-- Sélectionnez un rôle --</option>
+                    <option value="etudiant">Étudiant</option>
+                    <option value="formateur">Formateur</option>
+                    <option value="directeur">Directeur</option>
+                </select>
+                <button class="btn-test" onclick="testLogin()">🔐 Tester la Connexion</button>
+            </div>
+        </div>
+
+        <div class="users-box">
+            <h2>📝 Données Brutes localStorage</h2>
+            <pre id="raw-data"></pre>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="login.html" style="padding: 12px 24px; background: #667eea; color: white; text-decoration: none; border-radius: 6px;">← Retour à la Connexion</a>
+            <a href="signup.html" style="padding: 12px 24px; background: #28a745; color: white; text-decoration: none; border-radius: 6px;">← Aller à l'Inscription</a>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script>
+        function displayUsers() {
+            const users = JSON.parse(localStorage.getItem('app_users') || '[]');
+            const usersList = document.getElementById('users-list');
+            
+            if (users.length === 0) {
+                usersList.innerHTML = '<p style="color: #999;">❌ Aucun utilisateur enregistré</p>';
+                return;
+            }
+
+            let html = '<p style="color: #666; margin-bottom: 15px;"><strong>Total: ' + users.length + ' utilisateur(s)</strong></p>';
+            users.forEach((user, index) => {
+                html += `
+                    <div class="user-card">
+                        <strong>#${index + 1} - ${user.identifier}</strong><br>
+                        📧 Email: ${user.email}<br>
+                        👥 Rôle: <strong>${user.role}</strong><br>
+                        ✅ Vérifié: ${user.verified ? 'Oui' : 'Non'}<br>
+                        🔐 Mot de passe (encodé): ${user.password}<br>
+                        <small>ID: ${user.id}</small>
+                    </div>
+                `;
+            });
+            usersList.innerHTML = html;
+        }
+
+        function clearAllUsers() {
+            if (confirm('⚠️ Êtes-vous sûr? Cela supprimera TOUS les utilisateurs.')) {
+                localStorage.removeItem('app_users');
+                localStorage.removeItem('currentUser');
+                localStorage.removeItem('pendingUser');
+                displayUsers();
+                displayRawData();
+                alert('✅ Tous les utilisateurs ont été supprimés.');
+            }
+        }
+
+        function testLogin() {
+            const identifier = document.getElementById('test-identifier').value.trim();
+            const password = document.getElementById('test-password').value.trim();
+            const role = document.getElementById('test-role').value;
+            const messageDiv = document.getElementById('test-message');
+
+            console.log('🧪 Test Login:');
+            console.log('Identifiant:', identifier);
+            console.log('Mot de passe:', password);
+            console.log('Rôle:', role);
+
+            if (!identifier || !password || !role) {
+                messageDiv.innerHTML = '<div class="alert alert-danger">❌ Veuillez remplir tous les champs</div>';
+                return;
+            }
+
+            try {
+                const user = login(identifier, password, role);
+                messageDiv.innerHTML = `<div class="alert alert-success">✅ Connexion réussie! Vous êtes connecté en tant que ${user.identifier} (${user.role})</div>`;
+                console.log('✅ Login successful:', user);
+                
+                // Rediriger après 2 secondes
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 2000);
+            } catch (error) {
+                messageDiv.innerHTML = `<div class="alert alert-danger">❌ Erreur: ${error.message}</div>`;
+                console.log('❌ Login failed:', error.message);
+            }
+        }
+
+        function displayRawData() {
+            const rawData = {
+                app_users: JSON.parse(localStorage.getItem('app_users') || '[]'),
+                currentUser: JSON.parse(localStorage.getItem('currentUser') || 'null'),
+                pendingUser: JSON.parse(localStorage.getItem('pendingUser') || 'null')
+            };
+            document.getElementById('raw-data').textContent = JSON.stringify(rawData, null, 2);
+        }
+
+        // Afficher les données au chargement
+        window.addEventListener('load', () => {
+            displayUsers();
+            displayRawData();
+        });
+    </script>
+</body>
+</html>
