@@ -257,6 +257,20 @@
 
             if (!travail.assignations) travail.assignations = [];
 
+            // Règles selon type (US 6.1 / 5.1)
+            const type = travail.type || 'individuel';
+            if (type === 'individuel') {
+                if (etudiantIds.length !== 1) {
+                    showAlert('❌ Travail INDIVIDUEL: sélectionnez un seul étudiant', 'danger');
+                    return;
+                }
+                // Si déjà assigné à un autre étudiant, interdire
+                if (travail.assignations.length > 0 && !travail.assignations.includes(etudiantIds[0])) {
+                    showAlert('❌ Travail INDIVIDUEL déjà assigné à un autre étudiant', 'danger');
+                    return;
+                }
+            }
+
             etudiantIds.forEach(etudId => {
                 if (!travail.assignations.includes(etudId)) {
                     travail.assignations.push(etudId);

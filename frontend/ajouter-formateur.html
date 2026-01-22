@@ -96,7 +96,7 @@
                 html += '<div style="text-align: center; padding: 40px; color: #999;">Aucun formateur assigné</div>';
             } else {
                 espace.formateurs.forEach(formId => {
-                    const form = users.find(u => u.id === formId || u.identifier === formId);
+                    const form = users.find(u => u.id === formId);
                     html += `<div class="assignment-item">
                         <div>👨‍🏫 ${form ? form.identifier : 'Formateur'}</div>
                         <button class="btn btn-danger" onclick="removeFormateur('${espaceId}', '${formId}')">✕ Retirer</button>

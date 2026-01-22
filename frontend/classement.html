@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Classement - EduSphère</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="auth.js"></script>
+    <style>
+        html, body { width: 100%; height: 100%; background: #f5f7fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        .page-wrapper { display: grid; grid-template-columns: 300px 1fr; width: 100%; min-height: 100vh; }
+        .sidebar-wrapper { background: white; box-shadow: 2px 0 10px rgba(0,0,0,0.08); position: fixed; left: 0; top: 0; width: 300px; height: 100vh; overflow-y: auto; z-index: 100; }
+        .content-wrapper { grid-column: 2; padding: 30px 40px; overflow-y: auto; }
+        .content-header { background: white; padding: 30px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .content-header h1 { margin: 0; color: #2c3e50; font-size: 28px; }
+        .content-main { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .filters { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 15px 0 20px; }
+        .stat { background: #f9f9f9; border-left: 4px solid #3498db; padding: 12px; border-radius: 8px; }
+        .stat .k { color: #666; font-size: 12px; }
+        .stat .v { font-size: 20px; font-weight: 700; color: #2c3e50; margin-top: 4px; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+        .badge-ok { background: #d4edda; color: #155724; }
+        .badge-na { background: #f8d7da; color: #721c24; }
+        @media (max-width: 900px) { .filters { grid-template-columns: 1fr; } .stat-row { grid-template-columns: 1fr; } .page-wrapper { grid-template-columns: 1fr; } .sidebar-wrapper { position: relative; width: 100%; height: auto; } .content-wrapper { grid-column: 1; padding: 15px; } }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <div class="sidebar-wrapper" id="sidebar-wrapper"></div>
+        <div class="content-wrapper">
+            <div class="content-header">
+                <h1>🏆 Classement général</h1>
+                <p style="color:#666;margin-top:8px;">Classement par moyenne des travaux évalués (0–20)</p>
+            </div>
+
+            <div class="content-main">
+                <div id="alertBox"></div>
+
+                <div class="filters">
+                    <div class="form-group">
+                        <label for="promotionSelect">Promotion *</label>
+                        <select id="promotionSelect" onchange="renderRanking()"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="anneeSelect">Année (optionnel)</label>
+                        <select id="anneeSelect" onchange="renderRanking()">
+                            <option value="">Toutes</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="stat-row" id="statsRow"></div>
+                <div id="tableContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="sidebar.js"></script>
+    <script>
+        window.addEventListener('load', function() {
+            const user = getCurrentUser();
+            if (!isLoggedIn() || user.role !== 'directeur') {
+                window.location.href = 'login.html';
+                return;
+            }
+            loadFilters();
+            renderRanking();
+        });
+
+        function showAlert(msg, type) {
+            document.getElementById('alertBox').innerHTML = `<div class="message message-${type}">${msg}</div>`;
+            setTimeout(() => document.getElementById('alertBox').innerHTML = '', 3500);
+        }
+
+        function loadFilters() {
+            const promotions = JSON.parse(localStorage.getItem('promotions') || '[]');
+            const promoSelect = document.getElementById('promotionSelect');
+            promoSelect.innerHTML = '<option value="">-- Sélectionner --</option>' +
+                promotions.map(p => `<option value="${p.id}">${p.nom} (${p.code})</option>`).join('');
+
+            // Années dérivées des dates de début/fin si présentes, sinon du code/nom
+            const years = new Set();
+            promotions.forEach(p => {
+                const y1 = p.dateDebut ? String(p.dateDebut).slice(0,4) : null;
+                const y2 = p.dateFin ? String(p.dateFin).slice(0,4) : null;
+                if (y1 && /^\d{4}$/.test(y1)) years.add(y1);
+                if (y2 && /^\d{4}$/.test(y2)) years.add(y2);
+            });
+            const anneeSelect = document.getElementById('anneeSelect');
+            const sorted = Array.from(years).sort();
+            anneeSelect.innerHTML = '<option value="">Toutes</option>' + sorted.map(y => `<option value="${y}">${y}</option>`).join('');
+        }
+
+        function renderRanking() {
+            const promotionId = document.getElementById('promotionSelect').value;
+            const year = document.getElementById('anneeSelect').value;
+
+            if (!promotionId) {
+                document.getElementById('statsRow').innerHTML = '';
+                document.getElementById('tableContainer').innerHTML = '<div class="message message-info">Sélectionnez une promotion pour afficher le classement.</div>';
+                return;
+            }
+
+            const promotions = JSON.parse(localStorage.getItem('promotions') || '[]');
+            const promotion = promotions.find(p => p.id === promotionId);
+            if (!promotion) return;
+
+            const users = JSON.parse(localStorage.getItem('app_users') || '[]');
+            const livraisons = JSON.parse(localStorage.getItem('livraisons') || '[]');
+            const travaux = JSON.parse(localStorage.getItem('travaux') || '[]');
+
+            const studentIds = Array.isArray(promotion.etudiants) ? promotion.etudiants : [];
+
+            // Filtrer livraisons évaluées des étudiants de la promo
+            const evaluated = livraisons.filter(l => studentIds.includes(l.etudiantId) && l.note !== null && l.note !== undefined);
+
+            // Filtre année (si on veut): basé sur dateEvaluation ou dateRemise
+            const evaluatedByYear = year ? evaluated.filter(l => {
+                const d = l.dateEvaluation || l.dateRemise || l.dateCreation;
+                return d && String(d).slice(0,4) === year;
+            }) : evaluated;
+
+            // Calcul moyenne par étudiant
+            const byStudent = new Map();
+            evaluatedByYear.forEach(l => {
+                const arr = byStudent.get(l.etudiantId) || [];
+                arr.push(parseFloat(l.note));
+                byStudent.set(l.etudiantId, arr);
+            });
+
+            const rows = studentIds.map(id => {
+                const u = users.find(x => x.id === id);
+                const notes = byStudent.get(id) || [];
+                const avg = notes.length ? (notes.reduce((a,b) => a+b, 0) / notes.length) : null;
+                return {
+                    id,
+                    identifier: u ? u.identifier : id,
+                    email: u ? u.email : 'N/A',
+                    nb: notes.length,
+                    avg
+                };
+            });
+
+            rows.sort((a,b) => {
+                const av = (a.avg === null ? -1 : a.avg);
+                const bv = (b.avg === null ? -1 : b.avg);
+                return bv - av;
+            });
+
+            const counted = rows.filter(r => r.avg !== null);
+            const globalAvg = counted.length ? (counted.reduce((s,r) => s + r.avg, 0) / counted.length) : null;
+
+            document.getElementById('statsRow').innerHTML = `
+                <div class="stat"><div class="k">Étudiants</div><div class="v">${rows.length}</div></div>
+                <div class="stat"><div class="k">Évalués</div><div class="v">${counted.length}</div></div>
+                <div class="stat"><div class="k">Moyenne promo</div><div class="v">${globalAvg === null ? '—' : globalAvg.toFixed(2)}/20</div></div>
+            `;
+
+            const html = `
+                <table style="width:100%; border-collapse: collapse; margin-top: 10px;">
+                    <thead>
+                        <tr>
+                            <th style="text-align:left; padding: 12px; border-bottom:2px solid #ddd;">Rang</th>
+                            <th style="text-align:left; padding: 12px; border-bottom:2px solid #ddd;">Étudiant</th>
+                            <th style="text-align:left; padding: 12px; border-bottom:2px solid #ddd;">Email</th>
+                            <th style="text-align:left; padding: 12px; border-bottom:2px solid #ddd;">Travaux évalués</th>
+                            <th style="text-align:left; padding: 12px; border-bottom:2px solid #ddd;">Moyenne</th>
+                            <th style="text-align:left; padding: 12px; border-bottom:2px solid #ddd;">Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows.map((r, idx) => {
+                            const badge = r.avg === null ? '<span class="badge badge-na">Non classé</span>' : '<span class="badge badge-ok">Classé</span>';
+                            return `
+                                <tr>
+                                    <td style="padding: 12px; border-bottom:1px solid #eee;"><strong>#${idx+1}</strong></td>
+                                    <td style="padding: 12px; border-bottom:1px solid #eee;">${r.identifier}</td>
+                                    <td style="padding: 12px; border-bottom:1px solid #eee;">${r.email}</td>
+                                    <td style="padding: 12px; border-bottom:1px solid #eee;">${r.nb}</td>
+                                    <td style="padding: 12px; border-bottom:1px solid #eee;"><strong>${r.avg === null ? '—' : r.avg.toFixed(2) + '/20'}</strong></td>
+                                    <td style="padding: 12px; border-bottom:1px solid #eee;">${badge}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            document.getElementById('tableContainer').innerHTML = html;
+        }
+    </script>
+</body>
+</html>
+
+

@@ -59,7 +59,7 @@
             const users = JSON.parse(localStorage.getItem('app_users') || '[]');
             let filtered = livraisons;
             if (user.role === 'formateur') {
-                const myTravaux = travaux.filter(t => t.formateur === user.email || t.formateur === user.identifier);
+                const myTravaux = travaux.filter(t => t.createdBy === user.id);
                 const myTravailIds = myTravaux.map(t => t.id);
                 filtered = livraisons.filter(l => myTravailIds.includes(l.travailId));
             }
@@ -76,7 +76,7 @@
                 if (!travail) return;
                 html += `<h2 style="color: #2c3e50; margin-top: 30px; margin-bottom: 20px; font-size: 20px;">📝 ${travail.titre}</h2>`;
                 livrList.forEach(livr => {
-                    const etud = users.find(u => u.id === livr.etudiantId || u.identifier === livr.etudiantId);
+                    const etud = users.find(u => u.id === livr.etudiantId);
                     const evalued = livr.note !== null && livr.note !== undefined;
                     html += `<div class="livraison-card">
                         <h3>👨‍🎓 ${etud ? etud.identifier : 'Étudiant'}</h3>

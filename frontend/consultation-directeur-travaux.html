@@ -67,10 +67,10 @@
             } else {
                 travaux.forEach(t => {
                     const espace = espaces.find(e => e.id === t.espaceId);
-                    const formateur = users.find(u => u.id === t.createdBy || u.identifier === t.createdBy);
+                    const formateur = users.find(u => u.id === t.createdBy);
                     const dateEchéance = new Date(t.dateEchéance);
                     const etudiants = (t.assignations || []).map(id => 
-                        users.find(u => u.id === id || u.identifier === id)
+                        users.find(u => u.id === id)
                     ).filter(u => u);
 
                     html += `

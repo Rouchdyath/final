@@ -78,7 +78,7 @@
                 if (!travail) return;
                 html += `<h2 style="color: #2c3e50; margin-top: 30px; margin-bottom: 20px; font-size: 20px;">📝 ${travail.titre}</h2>`;
                 livrList.forEach(livr => {
-                    const etud = users.find(u => u.id === livr.etudiantId || u.identifier === livr.etudiantId);
+                    const etud = users.find(u => u.id === livr.etudiantId);
                     const evalued = livr.note !== null && livr.note !== undefined;
                     html += `<div class="livraison-card">
                         <h3>👨‍🎓 ${etud ? etud.identifier : 'Étudiant'}</h3>

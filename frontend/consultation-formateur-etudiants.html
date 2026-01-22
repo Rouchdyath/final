@@ -63,7 +63,7 @@
             
             // Filtrer les espaces du formateur
             const mesEspaces = espaces.filter(e => 
-                e.formateurs && (e.formateurs.includes(user.id) || e.formateurs.includes(user.identifier))
+                e.formateurs && e.formateurs.includes(user.id)
             );
 
             let html = '<option value="">-- Tous les espaces --</option>';
@@ -84,7 +84,7 @@
             const users = JSON.parse(localStorage.getItem('app_users') || '[]');
             
             let mesEspaces = espaces.filter(e => 
-                e.formateurs && (e.formateurs.includes(user.id) || e.formateurs.includes(user.identifier))
+                e.formateurs && e.formateurs.includes(user.id)
             );
             
             if (espaceFilter) {
@@ -98,7 +98,7 @@
             });
             
             const students = Array.from(studentIds).map(id => 
-                users.find(u => u.id === id || u.identifier === id)
+                users.find(u => u.id === id)
             ).filter(u => u && u.role === 'etudiant');
             
             let html = '';

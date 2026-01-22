@@ -411,28 +411,6 @@
             <div id="successMessage" class="success-message"></div>
 
             <form id="loginForm" onsubmit="handleLogin(event)">
-                <!-- Sélection du rôle -->
-                <div class="form-section">
-                    <h3>Sélectionnez votre rôle</h3>
-                    <div class="role-buttons">
-                        <button type="button" class="role-btn" data-role="etudiant" onclick="selectRole(this)">
-                            <span class="icon">👤</span>
-                            <span class="text">Étudiant</span>
-                            <span class="checkmark">✓</span>
-                        </button>
-                        <button type="button" class="role-btn" data-role="formateur" onclick="selectRole(this)">
-                            <span class="icon">📚</span>
-                            <span class="text">Formateur</span>
-                            <span class="checkmark">✓</span>
-                        </button>
-                        <button type="button" class="role-btn" data-role="directeur" onclick="selectRole(this)">
-                            <span class="icon">👁️</span>
-                            <span class="text">Directeur</span>
-                            <span class="checkmark">✓</span>
-                        </button>
-                    </div>
-                </div>
-
                 <!-- Identifiants -->
                 <div class="form-section">
                     <h3>Identifiants</h3>
@@ -475,28 +453,13 @@
             <!-- Informations de démo -->
             <div class="demo-credentials">
                 <h4>🔐 Mode Démo</h4>
-                <p><strong>Rôle:</strong> Sélectionnez un rôle ci-dessus</p>
-                <p><strong>Identifiant:</strong> N'importe quel texte</p>
-                <p><strong>Mot de passe:</strong> N'importe quel texte</p>
-                <p style="margin-top: 10px; font-style: italic;">Vous serez connecté immédiatement.</p>
+                <p><strong>Directeur:</strong> directeur@institution.fr / Directeur123</p>
+                <p style="margin-top: 10px; font-style: italic;">
+                    Le rôle est détecté automatiquement après connexion.
+                </p>
             </div>
 
-            <!-- Lien d'inscription -->
-            <div style="text-align: center; margin-top: 25px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
-                <p style="color: #666; font-size: 14px; margin: 0 0 10px 0;">
-                    Vous n'avez pas de compte?
-                </p>
-                <a href="signup.html" style="display: inline-block; padding: 12px 24px; background: #28a745; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; transition: all 0.3s; font-size: 14px;">
-                    S'inscrire ici →
-                </a>
-                <style>
-                    a[href="signup.html"]:hover {
-                        background: #218838;
-                        transform: translateY(-2px);
-                        box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
-                    }
-                </style>
-            </div>
+            <!-- Inscription publique désactivée (comptes créés par le Directeur) -->
         </div>
     </div>
 
@@ -701,19 +664,6 @@
             }
         }
 
-        let selectedRole = null;
-
-        function selectRole(button) {
-            // Retirer la sélection précédente
-            document.querySelectorAll('.role-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            // Ajouter la sélection au bouton cliqué
-            button.classList.add('active');
-            selectedRole = button.getAttribute('data-role');
-        }
-
         function handleLogin(event) {
             event.preventDefault();
 
@@ -723,13 +673,6 @@
             // Masquer les messages
             errorDiv.style.display = 'none';
             successDiv.style.display = 'none';
-
-            // Vérifier que le rôle est sélectionné
-            if (!selectedRole) {
-                errorDiv.textContent = '❌ Veuillez sélectionner un rôle.';
-                errorDiv.style.display = 'block';
-                return;
-            }
 
             const identifier = document.getElementById('identifier').value.trim();
             const password = document.getElementById('password').value.trim();
@@ -742,9 +685,9 @@
 
             // Connexion
             try {
-                const user = login(identifier, password, selectedRole);
+                const user = login(identifier, password);
                 
-                successDiv.textContent = `✅ Bienvenue ${user.identifier} (${formatRoleName(selectedRole)})!`;
+                successDiv.textContent = `✅ Bienvenue ${user.identifier} (${formatRoleName(user.role)})!`;
                 successDiv.style.display = 'block';
 
                 // Rediriger après 1.5 secondes

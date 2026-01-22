@@ -54,7 +54,7 @@
             
             // Filtrer les espaces du formateur
             const mesEspaces = espaces.filter(e => 
-                e.formateurs && (e.formateurs.includes(user.id) || e.formateurs.includes(user.identifier))
+                e.formateurs && e.formateurs.includes(user.id)
             );
 
             let html = '';

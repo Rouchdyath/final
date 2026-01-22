@@ -19,6 +19,10 @@
     --shadow-hover: 0 4px 15px rgba(0, 0, 0, 0.15);
     --border-radius: 8px;
     --transition: all 0.3s ease;
+    --border-color: rgba(44, 62, 80, 0.12);
+    --text-muted: rgba(26, 37, 47, 0.65);
+    --surface: #ffffff;
+    --surface-muted: #f7f9fc;
 }
 
 body {
@@ -28,6 +32,71 @@ body {
     padding: 20px;
     color: var(--dark-color);
 }
+
+/* Helpers UI modernes (utilisables partout sans casser l'existant) */
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+}
+
+.card-header {
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border-color);
+    background: linear-gradient(135deg, rgba(52,152,219,0.08) 0%, rgba(44,62,80,0.06) 100%);
+}
+
+.card-body {
+    padding: 20px;
+}
+
+.muted { color: var(--text-muted); }
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.table th {
+    text-align: left;
+    padding: 12px 14px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: rgba(26, 37, 47, 0.75);
+    background: var(--surface-muted);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(44, 62, 80, 0.08);
+}
+
+.table tr:hover td {
+    background: rgba(52, 152, 219, 0.04);
+}
+
+.pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    border: 1px solid var(--border-color);
+    background: var(--surface-muted);
+}
+
+.pill-success { background: rgba(39, 174, 96, 0.12); border-color: rgba(39, 174, 96, 0.25); color: #155724; }
+.pill-danger  { background: rgba(231, 76, 60, 0.12); border-color: rgba(231, 76, 60, 0.25); color: #721c24; }
+.pill-info    { background: rgba(52, 152, 219, 0.12); border-color: rgba(52, 152, 219, 0.25); color: #0c5460; }
 
 .container {
     max-width: 1200px;

@@ -231,6 +231,18 @@
             }
             loadUserInfo();
             loadMesTravaux();
+            // Si un travailId est passé dans l'URL, le sélectionner automatiquement
+            const urlParams = new URLSearchParams(window.location.search);
+            const travailIdParam = urlParams.get('travailId');
+            if (travailIdParam) {
+                setTimeout(() => {
+                    const select = document.getElementById('travailId');
+                    if (select) {
+                        select.value = travailIdParam;
+                        loadTravailDetails();
+                    }
+                }, 500);
+            }
         });
 
         function loadUserInfo() {
@@ -384,13 +396,26 @@
             // Créer la livraison
             const livraisons = JSON.parse(localStorage.getItem('livraisons') || '[]');
             const dateRemise = new Date(document.getElementById('dateRemise').value + ' ' + heureRemise);
+
+            // ❌ Interdire double livraison (US 8.1)
+            const already = livraisons.find(l => l.travailId === travailId && l.etudiantId === user.id);
+            if (already) {
+                showAlert('❌ Vous avez déjà soumis une livraison pour ce travail.', 'danger');
+                return;
+            }
+
+            // Retard: marquer le statut, sans bloquer (politique simple)
+            const travaux = JSON.parse(localStorage.getItem('travaux') || '[]');
+            const travail = travaux.find(t => t.id === travailId);
+            const echeance = travail && travail.dateEchéance ? new Date(travail.dateEchéance) : null;
+            const enRetard = echeance ? (new Date() > echeance) : false;
             
             const nouvelleLivraison = {
                 id: Date.now().toString(),
                 travailId: travailId,
                 etudiantId: user.id,
                 nomEtudiant: nom,
-                statut: 'soumise',
+                statut: enRetard ? 'soumise_en_retard' : 'soumise',
                 description: description,
                 commentaires: commentaires,
                 urlLivraison: urlLivraison,

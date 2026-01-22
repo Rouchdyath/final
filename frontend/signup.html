@@ -371,6 +371,18 @@
     </style>
 </head>
 <body>
+    <script>
+        // 🔒 Inscription publique désactivée
+        // Règle métier: seul le Directeur crée les comptes Étudiant/Formateur depuis son espace.
+        window.addEventListener('load', () => {
+            const user = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+            if (!user || user.role !== 'directeur') {
+                alert("Accès refusé. Les comptes sont créés par le Directeur.");
+                window.location.href = 'login.html';
+                return;
+            }
+        });
+    </script>
     <div class="signup-container">
         <div class="signup-header">
             <div class="icon">📝</div>

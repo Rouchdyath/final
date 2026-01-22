@@ -48,8 +48,16 @@
                         <input type="text" id="titre" placeholder="Ex: Devoir 1" required>
                     </div>
                     <div class="form-group">
-                        <label for="description">Description</label>
-                        <textarea id="description" placeholder="Description du travail..."></textarea>
+                        <label for="typeTravail">Type de Travail *</label>
+                        <select id="typeTravail" required>
+                            <option value="">-- Choisir un type --</option>
+                            <option value="individuel">Individuel</option>
+                            <option value="collectif">Collectif</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="consignes">Consignes *</label>
+                        <textarea id="consignes" placeholder="Consignes du travail (détails, livrables attendus, critères d'évaluation...)" required></textarea>
                     </div>
                     <div class="form-group">
                         <label for="dateEchéance">Date d'Échéance *</label>
@@ -77,7 +85,7 @@
             
             // Filtrer les espaces du formateur
             const mesEspaces = espaces.filter(e => 
-                e.formateurs && (e.formateurs.includes(user.id) || e.formateurs.includes(user.identifier))
+                e.formateurs && e.formateurs.includes(user.id)
             );
 
             let html = '<option value="">-- Choisir un espace --</option>';
@@ -91,10 +99,11 @@
             event.preventDefault();
             const espaceId = document.getElementById('espaceId').value;
             const titre = document.getElementById('titre').value.trim();
-            const description = document.getElementById('description').value.trim();
+            const type = document.getElementById('typeTravail').value;
+            const consignes = document.getElementById('consignes').value.trim();
             const dateEchéance = document.getElementById('dateEchéance').value;
 
-            if (!espaceId || !titre || !dateEchéance) {
+            if (!espaceId || !titre || !type || !consignes || !dateEchéance) {
                 showAlert('❌ Tous les champs obligatoires doivent être remplis', 'danger');
                 return;
             }
@@ -104,7 +113,8 @@
                 id: Date.now().toString(),
                 espaceId,
                 titre,
-                description,
+                type,            // "individuel" | "collectif"
+                consignes,
                 dateEchéance,
                 assignations: [],
                 dateCreation: new Date().toISOString(),

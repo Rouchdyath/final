@@ -102,7 +102,7 @@
                 html += '<div class="empty-state">Aucun étudiant assigné à cette promotion</div>';
             } else {
                 promotion.etudiants.forEach(etudId => {
-                    const etud = users.find(u => u.id === etudId || u.identifier === etudId);
+                    const etud = users.find(u => u.id === etudId);
                     html += `<div class="assignment-item">
                         <div class="assignment-info">👨‍🎓 ${etud ? etud.identifier : 'Étudiant'}</div>
                         <button class="btn btn-danger" onclick="removeStudent('${promotionId}', '${etudId}')">✕ Retirer</button>

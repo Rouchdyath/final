@@ -278,6 +278,15 @@
                             </div>
 
                             <div class="form-group">
+                                <label>Promotion</label>
+                                <select id="promotionSelect" required onchange="loadStudentsByPromotion()">
+                                    <option value="">-- Sélectionner une promotion --</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
                                 <label>Étudiant</label>
                                 <select id="etudiantSelect" required>
                                     <option value="">-- Sélectionner un étudiant --</option>
@@ -328,6 +337,7 @@
         function loadDropdowns() {
             const espaces = JSON.parse(localStorage.getItem('espaces') || '[]');
             const users = JSON.parse(localStorage.getItem('app_users') || '[]');
+            const promotions = JSON.parse(localStorage.getItem('promotions') || '[]');
             
             const formateurs = users.filter(u => u.role === 'formateur');
             const etudiants = users.filter(u => u.role === 'etudiant');
@@ -341,9 +351,34 @@
             const formateurOptions = formateurs.map(f => `<option value="${f.id}">${f.identifier} (${f.email})</option>`).join('');
             document.getElementById('formateurSelect').innerHTML = '<option value="">-- Sélectionner un formateur --</option>' + formateurOptions;
 
-            // Remplir les selects d'étudiants
-            const etudiantOptions = etudiants.map(e => `<option value="${e.id}">${e.identifier} (${e.email})</option>`).join('');
-            document.getElementById('etudiantSelect').innerHTML = '<option value="">-- Sélectionner un étudiant --</option>' + etudiantOptions;
+            // Remplir les promotions (pour filtrer les étudiants)
+            const promoOptions = promotions.map(p => `<option value="${p.id}">${p.nom} (${p.code})</option>`).join('');
+            document.getElementById('promotionSelect').innerHTML = '<option value="">-- Sélectionner une promotion --</option>' + promoOptions;
+
+            // Étudiants: remplis après sélection de promotion
+            document.getElementById('etudiantSelect').innerHTML = '<option value="">-- Sélectionner un étudiant --</option>';
+        }
+
+        function loadStudentsByPromotion() {
+            const users = JSON.parse(localStorage.getItem('app_users') || '[]');
+            const promotions = JSON.parse(localStorage.getItem('promotions') || '[]');
+            const promotionId = document.getElementById('promotionSelect').value;
+            const select = document.getElementById('etudiantSelect');
+
+            if (!promotionId) {
+                select.innerHTML = '<option value="">-- Sélectionner un étudiant --</option>';
+                return;
+            }
+
+            const promotion = promotions.find(p => p.id === promotionId);
+            const allowedIds = new Set((promotion && promotion.etudiants) ? promotion.etudiants : []);
+
+            const etudiants = users
+                .filter(u => u.role === 'etudiant' && allowedIds.has(u.id))
+                .map(e => `<option value="${e.id}">${e.identifier} (${e.email})</option>`)
+                .join('');
+
+            select.innerHTML = '<option value="">-- Sélectionner un étudiant --</option>' + etudiants;
         }
 
         function assignToFormateur(event) {
@@ -368,13 +403,13 @@
 
             // Vérifier si déjà assigné
             if (!espace.formateurs) espace.formateurs = [];
-            if (espace.formateurs.includes(formateur.identifier)) {
+            if (espace.formateurs.includes(formateur.id)) {
                 showAlert('⚠️ Ce formateur est déjà assigné à cet espace', 'info');
                 return;
             }
 
             // Assigner
-            espace.formateurs.push(formateur.identifier);
+            espace.formateurs.push(formateur.id);
             localStorage.setItem('espaces', JSON.stringify(espaces));
 
             showAlert(`✅ ${formateur.identifier} assigné à ${espace.matiere}`, 'success');
@@ -385,10 +420,11 @@
         function assignToEtudiant(event) {
             event.preventDefault();
             const espaceId = document.getElementById('espaceEtudiant').value;
+            const promotionId = document.getElementById('promotionSelect').value;
             const etudiantId = document.getElementById('etudiantSelect').value;
 
-            if (!espaceId || !etudiantId) {
-                showAlert('❌ Veuillez sélectionner un espace et un étudiant', 'danger');
+            if (!espaceId || !promotionId || !etudiantId) {
+                showAlert('❌ Veuillez sélectionner un espace, une promotion et un étudiant', 'danger');
                 return;
             }
 
@@ -396,21 +432,29 @@
             const espace = espaces.find(e => e.id === espaceId);
             const users = JSON.parse(localStorage.getItem('app_users') || '[]');
             const etudiant = users.find(u => u.id === etudiantId);
+            const promotions = JSON.parse(localStorage.getItem('promotions') || '[]');
+            const promotion = promotions.find(p => p.id === promotionId);
 
-            if (!espace || !etudiant) {
+            if (!espace || !etudiant || !promotion) {
                 showAlert('❌ Espace ou étudiant introuvable', 'danger');
+                return;
+            }
+
+            // ✅ Règle métier US 3.3: l'étudiant doit appartenir à la promotion sélectionnée
+            if (!Array.isArray(promotion.etudiants) || !promotion.etudiants.includes(etudiant.id)) {
+                showAlert('❌ Cet étudiant n’appartient pas à la promotion sélectionnée', 'danger');
                 return;
             }
 
             // Vérifier si déjà assigné
             if (!espace.etudiants) espace.etudiants = [];
-            if (espace.etudiants.includes(etudiant.identifier)) {
+            if (espace.etudiants.includes(etudiant.id)) {
                 showAlert('⚠️ Cet étudiant est déjà assigné à cet espace', 'info');
                 return;
             }
 
             // Assigner
-            espace.etudiants.push(etudiant.identifier);
+            espace.etudiants.push(etudiant.id);
             localStorage.setItem('espaces', JSON.stringify(espaces));
 
             showAlert(`✅ ${etudiant.identifier} assigné à ${espace.matiere}`, 'success');

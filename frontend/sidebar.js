@@ -59,7 +59,8 @@ function initSidebar() {
                 { text: 'Lister Promotions', href: 'liste-promotions.html', icon: '📋' },
                 { text: 'Créer Promotion', href: 'creer-promotion.html', icon: '➕' },
                 { text: 'Assigner Étudiants', href: 'ajouter-etudiant-promotion.html', icon: '👨‍🎓' },
-                { text: 'Consulter Promotions', href: 'consultation-directeur-promotions.html', icon: '👁️' }
+                { text: 'Consulter Promotions', href: 'consultation-directeur-promotions.html', icon: '👁️' },
+                { text: 'Classement', href: 'classement.html', icon: '🏆' }
             ]},
             { title: 'Travaux', icon: '📝', items: [
                 { text: 'Créer un Travail', href: 'creer-travail.html', icon: '➕' },

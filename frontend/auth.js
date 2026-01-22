@@ -35,6 +35,70 @@ function initializeTestUsers() {
 // Initialiser les utilisateurs de test au chargement
 initializeTestUsers();
 
+// Normaliser / migrer les données stockées en localStorage (compat avec anciennes versions)
+function normalizeLocalData() {
+    const users = JSON.parse(localStorage.getItem('app_users') || '[]');
+    if (!users.length) return;
+
+    const byId = new Map(users.map(u => [u.id, u]));
+    const byIdentifier = new Map(users.filter(u => u.identifier).map(u => [String(u.identifier).toLowerCase(), u]));
+    const byEmail = new Map(users.filter(u => u.email).map(u => [String(u.email).toLowerCase(), u]));
+
+    const toUserId = (value) => {
+        if (!value) return value;
+        const v = String(value);
+        if (byId.has(v)) return v;
+        const lower = v.toLowerCase();
+        const u = byIdentifier.get(lower) || byEmail.get(lower);
+        return u ? u.id : value;
+    };
+
+    // Espaces: convertir formateurs/etudiants -> ids
+    const espaces = JSON.parse(localStorage.getItem('espaces') || '[]');
+    if (Array.isArray(espaces) && espaces.length) {
+        espaces.forEach(e => {
+            if (Array.isArray(e.formateurs)) e.formateurs = e.formateurs.map(toUserId);
+            if (Array.isArray(e.etudiants)) e.etudiants = e.etudiants.map(toUserId);
+        });
+        localStorage.setItem('espaces', JSON.stringify(espaces));
+    }
+
+    // Promotions: convertir etudiants/formateurs -> ids (si présents)
+    const promotions = JSON.parse(localStorage.getItem('promotions') || '[]');
+    if (Array.isArray(promotions) && promotions.length) {
+        promotions.forEach(p => {
+            if (Array.isArray(p.etudiants)) p.etudiants = p.etudiants.map(toUserId);
+            if (Array.isArray(p.formateurs)) p.formateurs = p.formateurs.map(toUserId);
+        });
+        localStorage.setItem('promotions', JSON.stringify(promotions));
+    }
+
+    // Travaux: assurer createdBy (si ancienne donnée contient "formateur" email/identifier)
+    const travaux = JSON.parse(localStorage.getItem('travaux') || '[]');
+    if (Array.isArray(travaux) && travaux.length) {
+        travaux.forEach(t => {
+            if (!t.createdBy && t.formateur) {
+                const v = String(t.formateur).toLowerCase();
+                const u = byEmail.get(v) || byIdentifier.get(v);
+                if (u) t.createdBy = u.id;
+            }
+            if (Array.isArray(t.assignations)) t.assignations = t.assignations.map(toUserId);
+        });
+        localStorage.setItem('travaux', JSON.stringify(travaux));
+    }
+
+    // Livraisons: convertir etudiantId -> id (ancienne démo utilisait parfois "etudiant1"...)
+    const livraisons = JSON.parse(localStorage.getItem('livraisons') || '[]');
+    if (Array.isArray(livraisons) && livraisons.length) {
+        livraisons.forEach(l => {
+            if (l.etudiantId) l.etudiantId = toUserId(l.etudiantId);
+        });
+        localStorage.setItem('livraisons', JSON.stringify(livraisons));
+    }
+}
+
+normalizeLocalData();
+
 const ROLE_PERMISSIONS = {
     'etudiant': [
         'liste-travaux.html',
@@ -73,6 +137,7 @@ const ROLE_PERMISSIONS = {
         'consultation-directeur-etudiants.html',
         'consultation-directeur-promotions.html',
         'consultation-formateur-travaux.html'
+        ,'classement.html'
     ]
 };
 
@@ -99,45 +164,31 @@ function isLoggedIn() {
     return getCurrentUser() !== null;
 }
 
-// Connexion
+// Connexion (rôle auto-détecté)
+// Compat: si un 3e paramètre `role` est fourni, on filtre aussi par rôle.
 function login(identifier, password, role) {
-    // Récupérer les utilisateurs enregistrés depuis localStorage
     const users = JSON.parse(localStorage.getItem('app_users') || '[]');
-    
-    // Convertir l'identifiant en minuscules pour la comparaison (insensible à la casse)
-    const identifierLower = identifier.toLowerCase().trim();
-    
-    console.log('🔍 DEBUG LOGIN:');
-    console.log('Identifiant recherché:', identifierLower);
-    console.log('Rôle recherché:', role);
-    console.log('Utilisateurs enregistrés:', users);
-    
-    // Chercher l'utilisateur par identifiant (insensible à la casse) ET rôle
+    const identifierLower = (identifier || '').toLowerCase().trim();
+
     const foundUser = users.find(u => {
-        const match = u.identifier.toLowerCase() === identifierLower && u.role === role;
-        console.log(`Vérification: ${u.identifier.toLowerCase()} === ${identifierLower} && ${u.role} === ${role} = ${match}`);
-        return match;
+        const idMatch =
+            (u.identifier && u.identifier.toLowerCase() === identifierLower) ||
+            (u.email && u.email.toLowerCase() === identifierLower);
+
+        if (!idMatch) return false;
+        if (role) return u.role === role;
+        return true;
     });
-    
+
     if (!foundUser) {
-        console.log('❌ Utilisateur non trouvé');
-        throw new Error(`Identifiant ou rôle incorrect. Utilisateur '${identifier}' avec le rôle '${role}' n'existe pas.`);
+        throw new Error("Compte introuvable.");
     }
-    
-    console.log('✅ Utilisateur trouvé:', foundUser);
-    
-    // Vérifier le mot de passe (décoder depuis base64)
-    const storedPassword = atob(foundUser.password);
-    console.log('Mot de passe entré:', password);
-    console.log('Mot de passe stocké (décodé):', storedPassword);
-    console.log('Correspondance:', storedPassword === password);
-    
+
+    const storedPassword = atob(foundUser.password || '');
     if (storedPassword !== password) {
-        console.log('❌ Mot de passe incorrect');
-        throw new Error(`Mot de passe incorrect pour l'utilisateur '${identifier}'`);
+        throw new Error("Mot de passe incorrect.");
     }
-    
-    // Créer la session utilisateur
+
     const user = {
         id: foundUser.id,
         identifier: foundUser.identifier,
@@ -145,8 +196,7 @@ function login(identifier, password, role) {
         role: foundUser.role,
         loginTime: new Date().getTime()
     };
-    
-    console.log('✅ Session créée:', user);
+
     localStorage.setItem('currentUser', JSON.stringify(user));
     return user;
 }
@@ -157,14 +207,14 @@ function logout() {
     window.location.href = 'login.html';
 }
 
-// Formater le nom du rôle
+// Formater le nom d'affichage du rôle
 function formatRoleName(role) {
-    const roleNames = {
-        'etudiant': 'Étudiant',
-        'formateur': 'Formateur',
-        'directeur': 'Directeur'
+    const names = {
+        'etudiant': '👤 Étudiant',
+        'formateur': '📚 Formateur',
+        'directeur': '👁️ Directeur'
     };
-    return roleNames[role] || role;
+    return names[role] || role;
 }
 
 // Vérifier si l'utilisateur a accès à une page
@@ -273,12 +323,4 @@ function getUserStoriesByRole(role) {
     return allStories.filter(story => story.roles.includes(role));
 }
 
-// Formater le nom d'affichage du rôle
-function formatRoleName(role) {
-    const names = {
-        'etudiant': '👤 Étudiant',
-        'formateur': '📚 Formateur',
-        'directeur': '👁️ Directeur'
-    };
-    return names[role] || role;
-}
+// (formatRoleName est défini une seule fois plus haut)

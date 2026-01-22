@@ -292,11 +292,11 @@
             // Filtrer selon le rôle
             let filteredTravaux = travaux;
             if (user.role === 'formateur') {
-                filteredTravaux = travaux.filter(t => t.formateur === user.email || t.formateur === user.identifier);
+                filteredTravaux = travaux.filter(t => t.createdBy === user.id);
             } else if (user.role === 'etudiant') {
                 // Les étudiants ne voient que les travaux de leurs espaces
                 const espaces = JSON.parse(localStorage.getItem('espaces') || '[]');
-                const mesEspaces = espaces.filter(e => e.etudiants.includes(user.identifier));
+                const mesEspaces = espaces.filter(e => e.etudiants && e.etudiants.includes(user.id));
                 const mesEspacesIds = mesEspaces.map(e => e.id);
                 filteredTravaux = travaux.filter(t => mesEspacesIds.includes(t.espaceId));
             }

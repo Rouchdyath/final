@@ -121,7 +121,7 @@
             
             // Récupérer les étudiants de l'espace
             const espaceStuidents = (espace.etudiants || []).map(id => 
-                users.find(u => u.id === id || u.identifier === id)
+                users.find(u => u.id === id)
             ).filter(u => u);
             
             let html = '<option value="">-- Choisir un étudiant --</option>';
@@ -143,9 +143,20 @@
 
             const travaux = JSON.parse(localStorage.getItem('travaux') || '[]');
             const travail = travaux.find(t => t.id === travailId);
+            if (!travail) {
+                showAlert('❌ Travail introuvable', 'danger');
+                return;
+            }
             
             if (!travail.assignations) {
                 travail.assignations = [];
+            }
+
+            // Travail individuel: une seule assignation possible
+            const type = travail.type || 'individuel';
+            if (type === 'individuel' && travail.assignations.length > 0 && !travail.assignations.includes(studentId)) {
+                showAlert('❌ Travail INDIVIDUEL déjà assigné à un autre étudiant', 'danger');
+                return;
             }
             
             if (travail.assignations.includes(studentId)) {
@@ -176,7 +187,7 @@
                     html += `<div style="margin-bottom: 25px;">
                         <h3 style="color: #2c3e50; font-size: 16px; margin-bottom: 10px;">📝 ${t.titre}</h3>`;
                     t.assignations.forEach(studentId => {
-                        const student = users.find(u => u.id === studentId || u.identifier === studentId);
+                        const student = users.find(u => u.id === studentId);
                         html += `<div class="assignment-item">
                             <div class="assignment-info">
                                 <p><strong>${student ? student.identifier : 'Étudiant'}</strong></p>

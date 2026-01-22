@@ -88,7 +88,7 @@
                         <div class="travail-info">
                             <strong>Date d'échéance:</strong> ${dateEchéance.toLocaleDateString('fr-FR')} ${badge}
                         </div>
-                        <button class="btn btn-primary" onclick="alert('Soumettre une livraison - À implémenter')">📤 Soumettre ma Livraison</button>
+                        <button class="btn btn-primary" onclick="window.location.href='soumettre-livraison.html?travailId=${t.id}'">📤 Soumettre ma Livraison</button>
                     </div>`;
                 });
             }
