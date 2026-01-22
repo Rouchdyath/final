@@ -32,7 +32,12 @@ DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 CORS_ALLOWED_ORIGINS = [
+   HEAD
    "*"]
+    "*",
+]
+
+ 6e8a648d09a9af6e99ba5bee440ad0e75bcf13a5
 # Application definition
 
 INSTALLED_APPS = [
